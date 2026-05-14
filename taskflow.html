@@ -342,7 +342,7 @@ async function fetchAll(){
     db.from("tasks").select("*,assignee:users!tasks_assignee_id_fkey(id,name),project:projects(id,name,color)").order("updated_at",{ascending:false}),
     db.from("projects").select("*").order("name"),
     db.from("users").select("*").eq("active",true).order("name"),
-    db.from("opportunities").select("*,assignee:users(id,name)").order("updated_at",{ascending:false}),
+    db.from("opportunities").select("*,assignee:users!opportunities_assignee_id_fkey(id,name)").order("updated_at",{ascending:false}),
   ]);
   tasks=t.data||[];projects=p.data||[];users=u.data||[];opps=o.data||[];
   renderProj();renderTasks();renderTStats();renderOpps();renderOStats();populateSel();
