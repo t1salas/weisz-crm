@@ -87,6 +87,7 @@ textarea{resize:vertical;min-height:70px}
     <nav style="padding:12px 10px;flex:1;overflow-y:auto">
       <div class="nav-item active" id="nav-t" onclick="switchModule('tareas')">✓ Tareas</div>
       <div class="nav-item" id="nav-o" onclick="switchModule('oportunidades')">📋 Oportunidades</div>
+      <div class="nav-item" id="nav-a" onclick="switchModule('admin')" style="display:none" id="nav-admin">⚙️ Administración</div>
       <div style="margin-top:20px;padding:0 4px">
         <p style="font-size:10px;color:var(--t5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding:0 8px">Proyectos</p>
         <div id="proj-list"></div>
@@ -135,7 +136,7 @@ textarea{resize:vertical;min-height:70px}
     <div id="mod-oportunidades" style="display:none">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:22px 0 18px;border-bottom:1px solid var(--bor);margin-bottom:24px">
         <div><h1 style="font-size:20px;font-weight:700;letter-spacing:-.5px;margin-bottom:3px">Oportunidades</h1><p style="color:var(--t3);font-size:12px">Seguimiento de solicitudes y ofertas</p></div>
-        <button class="btn btn-p" onclick="openNewOpp()" style="box-shadow:0 4px 20px var(--sh)">+ Nueva oportunidad</button>
+        
       </div>
       <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:24px" id="o-stats"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
@@ -153,6 +154,46 @@ textarea{resize:vertical;min-height:70px}
         </div>
       </div>
       <div class="card" style="border-radius:14px;overflow:hidden"><table><thead><tr><th></th><th>Cliente</th><th>Oferta</th><th>Asunto correo</th><th>Responsable</th><th>Observación</th><th>Etapa</th><th>Fecha envío</th></tr></thead><tbody id="o-body"></tbody></table></div>
+    </div>
+
+    <!-- MÓDULO ADMIN -->
+    <div id="mod-admin" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:22px 0 18px;border-bottom:1px solid var(--bor);margin-bottom:24px">
+        <div><h1 style="font-size:20px;font-weight:700;letter-spacing:-.5px;margin-bottom:3px">Administración</h1>
+        <p style="color:var(--t3);font-size:12px">Gestión de usuarios, roles y configuración</p></div>
+        <button class="btn btn-p" onclick="openNewUser()" style="box-shadow:0 4px 20px var(--sh)">+ Nuevo usuario</button>
+      </div>
+      <!-- Tabs admin -->
+      <div style="display:flex;gap:0;border-bottom:1px solid var(--bor);margin-bottom:24px">
+        <button class="tab-btn active" id="at-usuarios" onclick="switchAdminTab('usuarios')" style="flex:none;padding:10px 18px;border-radius:0;border-bottom:2px solid var(--ac)">👥 Usuarios</button>
+        <button class="tab-btn" id="at-proyectos" onclick="switchAdminTab('proyectos')" style="flex:none;padding:10px 18px;border-radius:0;border-bottom:2px solid transparent">📁 Proyectos</button>
+        <button class="tab-btn" id="at-papelera" onclick="switchAdminTab('papelera')" style="flex:none;padding:10px 18px;border-radius:0;border-bottom:2px solid transparent">🗑️ Papelera</button>
+      </div>
+      <!-- Panel usuarios -->
+      <div id="ap-usuarios">
+        <div class="card" style="border-radius:14px;overflow:hidden">
+          <table><thead><tr><th>Usuario</th><th>Email</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
+          <tbody id="admin-users-tbody"></tbody></table>
+        </div>
+      </div>
+      <!-- Panel proyectos -->
+      <div id="ap-proyectos" style="display:none">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+          <button class="btn btn-p" onclick="openNewProject()">+ Nuevo proyecto</button>
+        </div>
+        <div class="card" style="border-radius:14px;overflow:hidden">
+          <table><thead><tr><th>Proyecto</th><th>Color</th><th>Tareas</th><th></th></tr></thead>
+          <tbody id="admin-proj-tbody"></tbody></table>
+        </div>
+      </div>
+      <!-- Panel papelera -->
+      <div id="ap-papelera" style="display:none">
+        <p style="color:var(--t3);font-size:13px;margin-bottom:16px">Registros eliminados en los últimos 30 días.</p>
+        <div class="card" style="border-radius:14px;overflow:hidden">
+          <table><thead><tr><th>Tipo</th><th>Nombre</th><th>Eliminado por</th><th>Fecha</th><th></th></tr></thead>
+          <tbody id="admin-trash-tbody"><tr><td colspan="5" style="padding:32px;text-align:center;color:var(--t5)">Papelera vacía</td></tr></tbody></table>
+        </div>
+      </div>
     </div>
   </main>
 </div>
@@ -173,9 +214,17 @@ textarea{resize:vertical;min-height:70px}
       <button class="btn btn-p" onclick="advTaskStatus()" style="flex:1;padding:8px">Avanzar estado &#x2192;</button>
       <button class="btn btn-d" onclick="delCurTask()" style="padding:8px 14px">Eliminar</button>
     </div>
+    <div style="padding:0 24px;border-bottom:1px solid var(--bor);flex-shrink:0;display:flex;gap:0">
+      <button class="tab-btn active" id="tt-actividad" onclick="switchTaskTab('actividad')" style="flex:none;padding:10px 16px;border-radius:0;border-bottom:2px solid var(--ac)">Actividad</button>
+      <button class="tab-btn" id="tt-archivos" onclick="switchTaskTab('archivos')" style="flex:none;padding:10px 16px;border-radius:0;border-bottom:2px solid transparent">Archivos</button>
+    </div>
     <div style="flex:1;overflow-y:auto;padding:16px 24px">
-      <p style="font-size:11px;color:var(--t3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:12px">Actividad</p>
-      <div id="mt-cmts"></div>
+      <div id="tt-panel-actividad">
+        <div id="mt-cmts"></div>
+      </div>
+      <div id="tt-panel-archivos" style="display:none">
+        <div id="mt-files-list"></div>
+      </div>
     </div>
     <div style="padding:12px 24px 20px;border-top:1px solid var(--bor);flex-shrink:0">
       <div style="display:flex;gap:8px;align-items:flex-end">
@@ -247,8 +296,12 @@ textarea{resize:vertical;min-height:70px}
           <button class="btn btn-p" id="btn-cmt" onclick="addCmt()" style="padding:10px 16px">&#x2191;</button>
         </div>
       </div>
-      <div style="display:flex;justify-content:flex-end;margin-top:10px">
-        <button class="btn btn-d" onclick="delCurOpp()" style="font-size:12px;padding:6px 14px">Eliminar oportunidad</button>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:8px">
+        <div style="display:flex;gap:8px">
+          <button id="btn-seguimiento" class="btn btn-p" onclick="reportarSeguimiento()" style="font-size:12px;padding:7px 14px;display:none">📞 Reportar seguimiento</button>
+          <button id="btn-perdida" class="btn" onclick="marcarPerdida()" style="font-size:12px;padding:7px 14px;background:#fee2e2;color:#ef4444;border:1px solid #fca5a5;display:none">❌ Marcar como perdida</button>
+        </div>
+        <button class="btn btn-d" onclick="delCurOpp()" style="font-size:12px;padding:6px 14px">Eliminar</button>
       </div>
     </div>
   </div>
@@ -297,8 +350,8 @@ const STC={"Pendiente":"#f59e0b","En progreso":"#3b82f6","Completado":"#10b981"}
 const STB={"Pendiente":"rgba(245,158,11,.12)","En progreso":"rgba(59,130,246,.12)","Completado":"rgba(16,185,129,.12)"};
 const PRC={"Alta":"#ef4444","Media":"#f97316","Baja":"#6b7280"};
 const PRB={"Alta":"rgba(239,68,68,.12)","Media":"rgba(249,115,22,.12)","Baja":"rgba(107,114,128,.12)"};
-const SGC={"Oferta reciente":"#06b6d4","1er Seguimiento":"#f59e0b","2do Seguimiento":"#3b82f6"};
-const SGB={"Oferta reciente":"rgba(6,182,212,.12)","1er Seguimiento":"rgba(245,158,11,.12)","2do Seguimiento":"rgba(59,130,246,.12)"};
+const SGC={"Oferta reciente":"#06b6d4","1er Seguimiento":"#f59e0b","2do Seguimiento":"#3b82f6","3er Seguimiento":"#f97316","Perdida":"#ef4444"};
+const SGB={"Oferta reciente":"rgba(6,182,212,.12)","1er Seguimiento":"rgba(245,158,11,.12)","2do Seguimiento":"rgba(59,130,246,.12)","3er Seguimiento":"rgba(249,115,22,.12)","Perdida":"rgba(239,68,68,.12)"};
 const SMC={"verde":"#10b981","amarillo":"#f59e0b","rojo":"#ef4444"};
 
 function applyTheme(){
@@ -443,7 +496,34 @@ function openTask(id){
 
 let pendTaskFile=null;
 
+function switchTaskTab(tab){
+  g("tt-panel-actividad").style.display = tab==="actividad"?"block":"none";
+  g("tt-panel-archivos").style.display  = tab==="archivos"?"block":"none";
+  g("tt-actividad").classList.toggle("active", tab==="actividad");
+  g("tt-archivos").classList.toggle("active", tab==="archivos");
+  g("tt-actividad").style.borderBottom = tab==="actividad"?"2px solid var(--ac)":"2px solid transparent";
+  g("tt-archivos").style.borderBottom  = tab==="archivos" ?"2px solid var(--ac)":"2px solid transparent";
+  if(tab==="archivos") loadTaskFiles(curTask.id);
+}
+
+async function loadTaskFiles(taskId){
+  const el=g("mt-files-list");
+  el.innerHTML=`<p style="color:var(--t5);font-size:12px;text-align:center;padding:16px">Cargando archivos...</p>`;
+  const{data}=await db.from("task_files").select("*,uploader:users(name)").eq("task_id",taskId).order("created_at",{ascending:false});
+  if(!data||!data.length){el.innerHTML=`<p style="color:var(--t5);font-size:12px;text-align:center;padding:24px">Sin archivos adjuntos.</p>`;return;}
+  el.innerHTML=data.map(f=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--inp);border:1px solid var(--bor);border-radius:8px;margin-bottom:8px">
+    <div style="display:flex;align-items:center;gap:10px">
+      <span style="font-size:20px">📄</span>
+      <div><p style="margin:0;font-size:13px;font-weight:600;color:var(--t1)">${f.original_name}</p>
+      <p style="margin:0;font-size:10px;color:var(--t3)">${f.uploader?.name||"Usuario"} · ${fdt(f.created_at)} · ${(f.size_bytes/1024).toFixed(0)} KB</p></div>
+    </div>
+    <button onclick="dlTaskFile('${f.storage_path}','${f.original_name}')" class="btn btn-s" style="padding:6px 12px;font-size:11px">⬇ Descargar</button>
+  </div>`).join("");
+}
+
 async function loadTaskCmts(taskId){
+  // Reset to actividad tab
+  switchTaskTab('actividad');
   const el=g("mt-cmts");
   el.innerHTML=`<p style="color:var(--t5);font-size:12px;text-align:center;padding:16px">Cargando...</p>`;
   const{data}=await db.from("task_comments").select("*,user:users(id,name),files:task_files(id,original_name,storage_path)").eq("task_id",taskId).order("created_at",{ascending:true});
@@ -473,7 +553,7 @@ async function addTaskCmt(){
     if(!ue)await db.from("task_files").insert({task_id:curTask.id,filename:`${c.id}.${ext}`,original_name:pendTaskFile.name,size_bytes:pendTaskFile.size,mime_type:pendTaskFile.type,storage_path:path,uploaded_by:CU.id});
   }
   g("mt-txt").value="";pendTaskFile=null;g("mt-fprev").style.display="none";g("mt-file").value="";
-  btn.textContent="&#x2191;";btn.disabled=false;
+  btn.innerHTML="&#x2191;";btn.disabled=false;
   await loadTaskCmts(curTask.id);
 }
 
@@ -553,10 +633,12 @@ async function openOpp(id){
   const sb=g("mo-subj");sb.textContent=curOpp.email_subject?"📧 "+curOpp.email_subject:"";sb.style.display=curOpp.email_subject?"block":"none";
   g("mo-sem").style.background=SMC[curOpp.status];
   const stb=g("mo-stage");stb.textContent=curOpp.stage;stb.style.color=SGC[curOpp.stage];stb.style.background=SGB[curOpp.stage];stb.style.border=`1px solid ${SGC[curOpp.stage]}44`;
-  g("mo-info").innerHTML=[{l:"Responsable",v:curOpp.assignee?.name||"Sin asignar"},{l:"Fecha envío",v:fd(curOpp.sent_date)},{l:"Observación",v:curOpp.quick_note||"—"}]
-  .map(f=>`<div style="flex:1;min-width:140px"><p style="margin:0 0 2px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">${f.l}</p><p style="margin:0;font-size:12px;font-weight:600;color:var(--t1)">${f.v}</p></div>`).join("");
+  const monto = curOpp.amount ? new Intl.NumberFormat("es-CO",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(curOpp.amount) : "—";
+  g("mo-info").innerHTML=[{l:"Responsable",v:curOpp.assignee?.name||"Sin asignar"},{l:"Fecha envío",v:fd(curOpp.sent_date)},{l:"Monto USD",v:monto,bold:true},{l:"Observación",v:curOpp.quick_note||"—"}]
+  .map(f=>`<div style="flex:1;min-width:120px"><p style="margin:0 0 2px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">${f.l}</p><p style="margin:0;font-size:${f.bold?"15px":"12px"};font-weight:${f.bold?"700":"600"};color:${f.bold?"var(--ac)":"var(--t1)"};">${f.v}</p></div>`).join("");
   g("m-opp").style.display="flex";
   g("mo-txt").value="";pendFile=null;g("mo-fprev").style.display="none";
+  updateOppModalButtons();
   await loadCmts(id);
 }
 
@@ -588,7 +670,7 @@ async function addCmt(){
     if(!ue)await db.from("opportunity_files").insert({opportunity_id:curOpp.id,filename:`${c.id}.${ext}`,original_name:pendFile.name,size_bytes:pendFile.size,mime_type:pendFile.type,storage_path:path,uploaded_by:CU.id});
   }
   g("mo-txt").value="";pendFile=null;g("mo-fprev").style.display="none";g("mo-file").value="";
-  btn.textContent="&#x2191;";btn.disabled=false;
+  btn.innerHTML="&#x2191;";btn.disabled=false;
   await loadCmts(curOpp.id);
 }
 
@@ -618,12 +700,322 @@ async function createOpp(){
   g("m-newopp").style.display="none";await fetchAll();
 }
 
+
+// ── SEGUIMIENTO ──────────────────────────────────────────
+const STAGE_ORDER = ["Oferta reciente","1er Seguimiento","2do Seguimiento","3er Seguimiento","Perdida"];
+const STAGE_SEGUIMIENTO = ["1er Seguimiento","2do Seguimiento","3er Seguimiento"];
+
+function updateOppModalButtons(){
+  const btnSeg  = g("btn-seguimiento");
+  const btnPerd = g("btn-perdida");
+  if(!curOpp||!btnSeg||!btnPerd) return;
+  const stage = curOpp.stage;
+  // Mostrar botón seguimiento solo en etapas de seguimiento
+  btnSeg.style.display  = STAGE_SEGUIMIENTO.includes(stage) ? "inline-flex" : "none";
+  // Mostrar botón perdida en seguimientos y oferta reciente (no si ya está perdida)
+  btnPerd.style.display = (stage !== "Perdida") ? "inline-flex" : "none";
+}
+
+function reportarSeguimiento(){
+  if(!curOpp) return;
+  const stage = curOpp.stage;
+  const esTercero = stage === "3er Seguimiento";
+
+  g("mseg-title").textContent = esTercero ? "Cerrar seguimiento" : "Reportar seguimiento";
+  g("mseg-info").textContent = `Oferta: ${curOpp.code||curOpp.name} | Cliente: ${curOpp.client_name} | Etapa actual: ${stage}`;
+  g("mseg-comment").value = "";
+  g("mseg-fecha").value = "";
+
+  // Si es 3er seguimiento → mostrar campo motivo perdida
+  g("mseg-fecha-wrap").style.display  = esTercero ? "none"  : "block";
+  g("mseg-perdida-wrap").style.display = esTercero ? "block" : "none";
+  g("mseg-motivo").value = esTercero ? "No se obtuvo respuesta" : "";
+
+  g("m-seguimiento").style.display = "flex";
+}
+
+function marcarPerdida(){
+  if(!curOpp) return;
+  g("mseg-title").textContent = "Marcar como Perdida";
+  g("mseg-info").textContent = `Oferta: ${curOpp.code||curOpp.name} | Cliente: ${curOpp.client_name}`;
+  g("mseg-comment").value = "";
+  g("mseg-fecha-wrap").style.display  = "none";
+  g("mseg-perdida-wrap").style.display = "block";
+  g("mseg-motivo").value = "";
+  g("m-seguimiento").style.display = "flex";
+}
+
+async function confirmarSeguimiento(){
+  const comment  = g("mseg-comment").value.trim();
+  const fecha    = g("mseg-fecha").value;
+  const motivo   = g("mseg-motivo").value.trim() || "No se obtuvo respuesta";
+  const esPerdida = g("mseg-perdida-wrap").style.display !== "none";
+  const esTercero = curOpp.stage === "3er Seguimiento";
+
+  if(!comment){ alert("Por favor escribe qué pasó en el seguimiento."); return; }
+  if(!esPerdida && !fecha){ alert("Por favor indica la fecha del próximo seguimiento."); return; }
+
+  const btn = g("btn-mseg-ok");
+  btn.textContent = "Guardando..."; btn.disabled = true;
+
+  try {
+    // Determinar nueva etapa
+    let newStage = curOpp.stage;
+    if(esPerdida || esTercero){
+      newStage = "Perdida";
+    } else {
+      const idx = STAGE_ORDER.indexOf(curOpp.stage);
+      newStage = STAGE_ORDER[Math.min(idx+1, STAGE_ORDER.length-1)];
+    }
+
+    // Texto del comentario completo
+    let fullComment = comment;
+    if(esPerdida || esTercero) fullComment += `
+
+📌 Motivo pérdida: ${motivo}`;
+    else fullComment += `
+
+📅 Próximo seguimiento: ${new Date(fecha+"T12:00:00").toLocaleDateString("es-CO",{day:"2-digit",month:"long",year:"numeric"})}`;
+
+    // Guardar comentario
+    await db.from("opportunity_comments").insert({
+      opportunity_id: curOpp.id,
+      user_id: CU.id,
+      comment: fullComment
+    });
+
+    // Actualizar etapa, estado y fecha próximo seguimiento
+    const updateData = {
+      stage: newStage,
+      status: newStage === "Perdida" ? "rojo" : "amarillo",
+      updated_at: new Date().toISOString()
+    };
+    if(fecha) updateData.next_follow_date = fecha;
+    if(esPerdida || esTercero) updateData.lost_reason = motivo;
+
+    await db.from("opportunities").update(updateData).eq("id", curOpp.id);
+
+    // Actualizar local
+    const o = opps.find(x=>x.id===curOpp.id);
+    if(o){ o.stage=newStage; o.status=updateData.status; }
+    curOpp.stage=newStage; curOpp.status=updateData.status;
+
+    // Cerrar modal seguimiento y refrescar
+    g("m-seguimiento").style.display="none";
+    renderOpps(); renderOStats();
+    await loadCmts(curOpp.id);
+    updateOppModalButtons();
+
+    // Actualizar badge de etapa en modal oportunidad
+    const stb=g("mo-stage");
+    stb.textContent=newStage;
+    stb.style.color=SGC[newStage]||"#ef4444";
+    stb.style.background=SGB[newStage]||"rgba(239,68,68,.12)";
+    stb.style.border=`1px solid ${(SGC[newStage]||"#ef4444")}44`;
+
+    // Semáforo
+    g("mo-sem").style.background = SMC[updateData.status];
+
+  } catch(e){
+    alert("Error al guardar: "+e.message);
+  }
+
+  btn.textContent = "Confirmar seguimiento"; btn.disabled = false;
+}
+
+
+// ── ADMIN ──────────────────────────────────────────────────
+const ROLES = {admin:"🔑 Admin", usuario:"👤 Usuario", lector:"👁️ Lector"};
+const ROLE_COLORS = {admin:"#8b5cf6", usuario:"#3b82f6", lector:"#6b7280"};
+
+function switchAdminTab(tab){
+  ["usuarios","proyectos","papelera"].forEach(t=>{
+    g("ap-"+t).style.display = t===tab?"block":"none";
+    g("at-"+t).classList.toggle("active", t===tab);
+    g("at-"+t).style.borderBottom = t===tab?"2px solid var(--ac)":"2px solid transparent";
+  });
+  if(tab==="usuarios")  renderAdminUsers();
+  if(tab==="proyectos") renderAdminProjects();
+}
+
+async function renderAdminUsers(){
+  const{data}=await db.from("users").select("*").order("name");
+  const tb=g("admin-users-tbody");
+  if(!data||!data.length){tb.innerHTML=`<tr><td colspan="5" style="padding:32px;text-align:center;color:var(--t5)">Sin usuarios</td></tr>`;return;}
+  tb.innerHTML=data.map(u=>`<tr>
+    <td><div style="display:flex;align-items:center;gap:10px">
+      <div style="width:32px;height:32px;border-radius:50%;background:${avc(u.name)};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white">${ini(u.name)}</div>
+      <span style="font-weight:600;font-size:13px">${u.name}</span></div></td>
+    <td style="font-size:12px;color:var(--t3)">${u.email}</td>
+    <td><span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;background:${ROLE_COLORS[u.role||"usuario"]}22;color:${ROLE_COLORS[u.role||"usuario"]}">${ROLES[u.role||"usuario"]}</span></td>
+    <td><span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;background:${u.active?"rgba(16,185,129,.12)":"rgba(239,68,68,.12)"};color:${u.active?"#10b981":"#ef4444"}">${u.active?"Activo":"Inactivo"}</span></td>
+    <td style="display:flex;gap:6px">
+      <button onclick="toggleUserRole('${u.id}','${u.role||"usuario"}')" class="btn btn-s" style="font-size:11px;padding:5px 10px">Cambiar rol</button>
+      <button onclick="toggleUserActive('${u.id}',${u.active})" class="btn btn-s" style="font-size:11px;padding:5px 10px">${u.active?"Desactivar":"Activar"}</button>
+    </td>
+  </tr>`).join("");
+}
+
+async function toggleUserRole(userId, currentRole){
+  const order=["usuario","admin","lector"];
+  const next=order[(order.indexOf(currentRole)+1)%3];
+  await db.from("users").update({role:next}).eq("id",userId);
+  renderAdminUsers();
+}
+
+async function toggleUserActive(userId, current){
+  await db.from("users").update({active:!current}).eq("id",userId);
+  renderAdminUsers();
+  await fetchAll();
+}
+
+function openNewUser(){ 
+  ["nu-name","nu-email","nu-pass"].forEach(id=>g(id).value="");
+  g("nu-role").value="usuario";
+  g("m-newuser").style.display="flex";
+}
+
+async function createUser(){
+  const name=g("nu-name").value.trim(), email=g("nu-email").value.trim(), pass=g("nu-pass").value, role=g("nu-role").value;
+  if(!name||!email||!pass){alert("Completa todos los campos");return;}
+  const btn=g("btn-nu");btn.textContent="Creando...";btn.disabled=true;
+  const{data,error}=await db.auth.admin?.createUser({email,password:pass,user_metadata:{name}});
+  // Si no hay admin API, usar signUp
+  const{data:sd,error:se}=await db.auth.signUp({email,password:pass,options:{data:{name}}});
+  const uid=sd?.user?.id;
+  if(uid) await db.from("users").upsert({id:uid,name,email,role,active:true});
+  btn.textContent="Crear usuario";btn.disabled=false;
+  if(se){alert("Error: "+se.message);return;}
+  g("m-newuser").style.display="none";
+  renderAdminUsers();
+}
+
+async function renderAdminProjects(){
+  const{data}=await db.from("projects").select("*,task_count:tasks(count)").order("name");
+  const tb=g("admin-proj-tbody");
+  if(!data||!data.length){tb.innerHTML=`<tr><td colspan="4" style="padding:32px;text-align:center;color:var(--t5)">Sin proyectos</td></tr>`;return;}
+  tb.innerHTML=data.map(p=>`<tr>
+    <td><span style="font-weight:600;font-size:13px">${p.name}</span></td>
+    <td><span class="dot" style="background:${p.color};width:16px;height:16px;display:inline-block;border-radius:50%"></span></td>
+    <td style="font-size:12px;color:var(--t3)">${p.task_count?.[0]?.count||0} tareas</td>
+    <td><button onclick="deleteProject('${p.id}','${p.name}')" class="btn btn-d" style="font-size:11px;padding:5px 10px">Eliminar</button></td>
+  </tr>`).join("");
+}
+
+let selectedProjColor="#8b5cf6";
+function selectProjColor(btn, color){
+  selectedProjColor=color;
+  g("np-color").value=color;
+  document.querySelectorAll("#np-colors button").forEach(b=>b.style.border="3px solid transparent");
+  btn.style.border="3px solid var(--t1)";
+}
+
+function openNewProject(){
+  g("np-name").value="";
+  selectedProjColor="#8b5cf6";
+  document.querySelectorAll("#np-colors button").forEach((b,i)=>b.style.border=i===0?"3px solid var(--t1)":"3px solid transparent");
+  g("m-newproj").style.display="flex";
+}
+
+async function createProject(){
+  const name=g("np-name").value.trim();
+  if(!name){alert("El nombre es requerido");return;}
+  const btn=g("btn-np");btn.textContent="Creando...";btn.disabled=true;
+  await db.from("projects").insert({name,color:selectedProjColor});
+  btn.textContent="Crear proyecto";btn.disabled=false;
+  g("m-newproj").style.display="none";
+  await fetchAll();
+  renderAdminProjects();
+}
+
+async function deleteProject(id, name){
+  if(!confirm(`¿Eliminar el proyecto "${name}"? Las tareas asociadas quedarán sin proyecto.`))return;
+  await db.from("projects").delete().eq("id",id);
+  await fetchAll();
+  renderAdminProjects();
+}
+
 function switchModule(m){
   g("mod-tareas").style.display=m==="tareas"?"block":"none";
   g("mod-oportunidades").style.display=m==="oportunidades"?"block":"none";
+  g("mod-admin").style.display=m==="admin"?"block":"none";
   g("nav-t").classList.toggle("active",m==="tareas");
   g("nav-o").classList.toggle("active",m==="oportunidades");
+  const na=document.getElementById("nav-admin");if(na)na.classList.toggle("active",m==="admin");
+  if(m==="admin") switchAdminTab("usuarios");
 }
 </script>
+
+<!-- MODAL REPORTAR SEGUIMIENTO -->
+<div id="m-seguimiento" class="modal-bg" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" style="max-width:460px;padding:26px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 id="mseg-title" style="font-size:17px;font-weight:700;color:var(--t1)">Reportar seguimiento</h2>
+      <button onclick="document.getElementById('m-seguimiento').style.display='none'" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:20px">&#x2715;</button>
+    </div>
+    <div style="background:var(--bg-input,var(--inp));border:1px solid var(--bor);border-radius:8px;padding:10px 14px;margin-bottom:16px">
+      <p id="mseg-info" style="margin:0;font-size:12px;color:var(--t3)"></p>
+    </div>
+    <label class="lbl">¿Qué pasó en el seguimiento? *</label>
+    <textarea id="mseg-comment" placeholder="Describe el resultado del seguimiento..." style="margin-bottom:16px;min-height:90px"></textarea>
+    <div id="mseg-fecha-wrap">
+      <label class="lbl">Fecha del próximo seguimiento *</label>
+      <input type="date" id="mseg-fecha" style="margin-bottom:16px"/>
+    </div>
+    <div id="mseg-perdida-wrap" style="display:none">
+      <label class="lbl">Motivo de pérdida</label>
+      <input type="text" id="mseg-motivo" placeholder="No se obtuvo respuesta" style="margin-bottom:16px"/>
+      <p style="font-size:11px;color:var(--t3);margin-bottom:16px">⚠️ Esta oferta pasará automáticamente a <strong>Perdida</strong>.</p>
+    </div>
+    <button class="btn btn-p" id="btn-mseg-ok" onclick="confirmarSeguimiento()" style="width:100%;padding:12px;font-size:14px">Confirmar seguimiento</button>
+  </div>
+</div>
+<!-- MODAL NUEVO USUARIO -->
+<div id="m-newuser" class="modal-bg" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" style="max-width:420px;padding:26px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="font-size:17px;font-weight:700;color:var(--t1)">Nuevo usuario</h2>
+      <button onclick="document.getElementById('m-newuser').style.display='none'" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:20px">&#x2715;</button>
+    </div>
+    <label class="lbl">Nombre completo *</label>
+    <input type="text" id="nu-name" placeholder="Nombre del usuario" style="margin-bottom:14px"/>
+    <label class="lbl">Email *</label>
+    <input type="email" id="nu-email" placeholder="usuario@weisz.com.co" style="margin-bottom:14px"/>
+    <label class="lbl">Contraseña inicial *</label>
+    <input type="password" id="nu-pass" placeholder="Mínimo 8 caracteres" style="margin-bottom:14px"/>
+    <label class="lbl">Rol</label>
+    <select id="nu-role" style="margin-bottom:20px">
+      <option value="usuario">Usuario</option>
+      <option value="admin">Administrador</option>
+      <option value="lector">Lector</option>
+    </select>
+    <button class="btn btn-p" id="btn-nu" onclick="createUser()" style="width:100%;padding:12px;font-size:14px">Crear usuario</button>
+  </div>
+</div>
+
+<!-- MODAL NUEVO PROYECTO -->
+<div id="m-newproj" class="modal-bg" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" style="max-width:380px;padding:26px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="font-size:17px;font-weight:700;color:var(--t1)">Nuevo proyecto</h2>
+      <button onclick="document.getElementById('m-newproj').style.display='none'" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:20px">&#x2715;</button>
+    </div>
+    <label class="lbl">Nombre del proyecto *</label>
+    <input type="text" id="np-name" placeholder="Ej: Ventas Q3" style="margin-bottom:14px"/>
+    <label class="lbl">Color</label>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px" id="np-colors">
+      <button onclick="selectProjColor(this,'#8b5cf6')" style="width:28px;height:28px;border-radius:50%;background:#8b5cf6;border:3px solid #8b5cf6;cursor:pointer"></button>
+      <button onclick="selectProjColor(this,'#06b6d4')" style="width:28px;height:28px;border-radius:50%;background:#06b6d4;border:3px solid transparent;cursor:pointer"></button>
+      <button onclick="selectProjColor(this,'#10b981')" style="width:28px;height:28px;border-radius:50%;background:#10b981;border:3px solid transparent;cursor:pointer"></button>
+      <button onclick="selectProjColor(this,'#f59e0b')" style="width:28px;height:28px;border-radius:50%;background:#f59e0b;border:3px solid transparent;cursor:pointer"></button>
+      <button onclick="selectProjColor(this,'#ef4444')" style="width:28px;height:28px;border-radius:50%;background:#ef4444;border:3px solid transparent;cursor:pointer"></button>
+      <button onclick="selectProjColor(this,'#3b82f6')" style="width:28px;height:28px;border-radius:50%;background:#3b82f6;border:3px solid transparent;cursor:pointer"></button>
+      <button onclick="selectProjColor(this,'#ec4899')" style="width:28px;height:28px;border-radius:50%;background:#ec4899;border:3px solid transparent;cursor:pointer"></button>
+      <button onclick="selectProjColor(this,'#f97316')" style="width:28px;height:28px;border-radius:50%;background:#f97316;border:3px solid transparent;cursor:pointer"></button>
+    </div>
+    <input type="hidden" id="np-color" value="#8b5cf6"/>
+    <button class="btn btn-p" id="btn-np" onclick="createProject()" style="width:100%;padding:12px;font-size:14px">Crear proyecto</button>
+  </div>
+</div>
 </body>
 </html>
