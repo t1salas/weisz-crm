@@ -707,15 +707,25 @@ async function openOpp(id){
 }
 
 async function loadCmts(oppId){
-  const{data}=await db.from("opportunity_comments").select("*,user:users(id,name),files:opportunity_files(id,original_name,storage_path)").eq("opportunity_id",oppId).order("created_at",{ascending:true});
   const el=g("mo-cmts");
-  if(!data||!data.length){el.innerHTML=`<p style="color:var(--t5);font-size:12px;text-align:center;padding:20px">Sin actividad aún. ¡Agrega el primer comentario!</p>`;return;}
-  el.innerHTML=data.map(c=>`<div style="display:flex;gap:10px;margin-bottom:16px">
-    <div style="width:28px;height:28px;border-radius:50%;background:${avc(c.user?.name||"?")};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;flex-shrink:0">${ini(c.user?.name||"?")}</div>
-    <div style="flex:1"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:12px;font-weight:600;color:var(--t1)">${c.user?.name||"Usuario"}</span><span style="font-size:10px;color:var(--t5)">${fdt(c.created_at)}</span></div>
+  el.innerHTML=`<p style="color:var(--t5);font-size:12px;text-align:center;padding:20px">Cargando...</p>`;
+  // Fetch separately to avoid JOIN ambiguity
+  const[{data:cmts},{data:fils}]=await Promise.all([
+    db.from("opportunity_comments").select("id,opportunity_id,user_id,comment,created_at").eq("opportunity_id",oppId).order("created_at",{ascending:true}),
+    db.from("opportunity_files").select("id,opportunity_id,original_name,storage_path").eq("opportunity_id",oppId)
+  ]);
+  if(!cmts||!cmts.length){el.innerHTML=`<p style="color:var(--t5);font-size:12px;text-align:center;padding:20px">Sin actividad aún. ¡Agrega el primer comentario!</p>`;return;}
+  const umap={};users.forEach(u=>umap[u.id]=u.name);
+  el.innerHTML=cmts.map(c=>{
+    const uname=umap[c.user_id]||"Usuario";
+    const cfiles=(fils||[]).filter(f=>f.storage_path?.includes(c.id));
+    return`<div style="display:flex;gap:10px;margin-bottom:16px">
+    <div style="width:28px;height:28px;border-radius:50%;background:${avc(uname)};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;flex-shrink:0">${ini(uname)}</div>
+    <div style="flex:1"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:12px;font-weight:600;color:var(--t1)">${uname}</span><span style="font-size:10px;color:var(--t5)">${fdt(c.created_at)}</span></div>
     <div class="cbox"><p style="margin:0;font-size:13px;color:var(--t2);line-height:1.5">${c.comment}</p>
-    ${c.files&&c.files.length?c.files.map(f=>`<button onclick="dlFile('${f.storage_path}','${f.original_name}')" style="display:flex;align-items:center;gap:6px;margin-top:8px;background:var(--pill);border:1px solid var(--bor);border-radius:6px;padding:5px 10px;cursor:pointer;font-family:inherit;color:var(--acs);font-size:11px;font-weight:600">&#x1F4CE; ${f.original_name}</button>`).join(""):""}
-    </div></div></div>`).join("");
+    ${cfiles.length?cfiles.map(f=>`<button onclick="dlFile('${f.storage_path}','${f.original_name}')" style="display:flex;align-items:center;gap:6px;margin-top:8px;background:var(--pill);border:1px solid var(--bor);border-radius:6px;padding:5px 10px;cursor:pointer;font-family:inherit;color:var(--acs);font-size:11px;font-weight:600">&#x1F4CE; ${f.original_name}</button>`).join(""):""}
+    </div></div></div>`;
+  }).join("");
 }
 
 function prevFile(input){
