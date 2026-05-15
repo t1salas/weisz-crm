@@ -76,6 +76,10 @@ textarea{resize:vertical;min-height:70px}
       <button class="btn btn-p" id="a-btn" onclick="doAuth()" style="width:100%;padding:12px;font-size:14px">Entrar al sistema</button>
     </div>
     <p style="text-align:center;color:var(--t5);font-size:10px;margin-top:16px;letter-spacing:1.5px;text-transform:uppercase">Instrumentos · Ingeniería · Control</p>
+    <div id="emergency-box" style="display:none;margin-top:16px;text-align:center">
+      <p style="color:var(--t3);font-size:11px;margin-bottom:8px">¿La página no responde?</p>
+      <button onclick="emergencyReset()" style="background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#ef4444;padding:8px 20px;border-radius:8px;cursor:pointer;font-family:inherit;font-size:12px;font-weight:600">🔄 Restablecer sesión</button>
+    </div>
   </div>
 </div>
 
@@ -366,25 +370,49 @@ g("tgl-auth").onclick=toggleTheme;
 applyTheme();
 g("today").textContent=new Date().toLocaleDateString("es-CO",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
 
-// Inicialización única y limpia
+// Mostrar botón de emergencia si tarda más de 3 segundos
+const _emergencyTimer = setTimeout(()=>{
+  const box = document.getElementById('emergency-box');
+  if(box) box.style.display='block';
+}, 3000);
+
+async function emergencyReset(){
+  try{
+    // Limpiar TODO el localStorage relacionado con supabase
+    Object.keys(localStorage)
+      .filter(k=>k.includes('supabase')||k.includes('sb-')||k.includes('wcrm'))
+      .forEach(k=>localStorage.removeItem(k));
+    await db.auth.signOut();
+  }catch(e){}
+  // Forzar recarga limpia
+  window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
+}
+
 db.auth.getSession().then(async ({data:{session:s}, error:e})=>{
+  clearTimeout(_emergencyTimer);
+  const box = document.getElementById('emergency-box');
+  if(box) box.style.display='none';
+
   if(e || !s || !s.user){
-    // Limpiar tokens corruptos y mostrar login
-    try{Object.keys(localStorage).filter(k=>k.includes('supabase')||k.includes('sb-')).forEach(k=>localStorage.removeItem(k));}catch(_){}
+    try{
+      Object.keys(localStorage)
+        .filter(k=>k.includes('supabase')||k.includes('sb-'))
+        .forEach(k=>localStorage.removeItem(k));
+    }catch(_){}
     showAuth();
     return;
   }
   CU = s.user;
   showApp();
   await fetchAll();
+}).catch(async()=>{
+  clearTimeout(_emergencyTimer);
+  try{await db.auth.signOut();}catch(_){}
+  showAuth();
 });
 
-// Solo escuchar cambios reales (logout manual, expiración)
-db.auth.onAuthStateChange((ev, sess)=>{
-  if(ev==="SIGNED_OUT"){
-    CU=null;
-    showAuth();
-  }
+db.auth.onAuthStateChange((ev,sess)=>{
+  if(ev==="SIGNED_OUT"){CU=null;showAuth();}
 });
 
 function showAuth(){g("auth-screen").style.display="flex";g("app-screen").style.display="none";}
