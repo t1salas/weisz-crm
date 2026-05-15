@@ -156,7 +156,20 @@ textarea{resize:vertical;min-height:70px}
           <button class="filter-btn" id="of-Perdida" onclick="setOF('Perdida')">Perdida</button>
         </div>
       </div>
-      <div class="card" style="border-radius:14px;overflow:hidden"><table><thead><tr><th></th><th>Cliente</th><th>Oferta</th><th>Asunto correo</th><th>Responsable</th><th>Observación</th><th>Etapa</th><th>Fecha envío</th></tr></thead><tbody id="o-body"></tbody></table></div>
+      <div class="card" style="border-radius:14px;overflow:hidden"><table><thead><tr><th style="width:40px"><input type="checkbox" id="chk-all" onclick="toggleAllOpps(this)" style="width:16px;height:16px;cursor:pointer"/></th><th>Cliente</th><th>Oferta</th><th>Asunto correo</th><th>Responsable</th><th>Observación</th><th>Etapa</th><th>Fecha envío</th></tr></thead><tbody id="o-body"></tbody></table></div>
+    </div>
+
+    <!-- BARRA FLOTANTE SELECCIÓN MÚLTIPLE -->
+    <div id="opp-bulk-bar" style="display:none;position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--bor);border-radius:16px;padding:14px 24px;box-shadow:0 8px 40px rgba(0,0,0,.25);z-index:150;display:none;align-items:center;gap:16px;min-width:420px">
+      <div style="display:flex;align-items:center;gap:8px">
+        <span style="width:28px;height:28px;background:var(--ac);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:white" id="bulk-count">0</span>
+        <span style="font-size:13px;font-weight:600;color:var(--t1)">oportunidades seleccionadas</span>
+      </div>
+      <div style="display:flex;gap:8px;margin-left:auto">
+        <button class="btn btn-p" onclick="bulkSeguimiento()" style="font-size:12px;padding:8px 16px">📞 Reportar seguimiento</button>
+        <button class="btn" onclick="bulkPerdida()" style="font-size:12px;padding:8px 16px;background:#fee2e2;color:#ef4444;border:1px solid #fca5a5">❌ Marcar perdidas</button>
+        <button class="btn btn-s" onclick="clearOppSelection()" style="font-size:12px;padding:8px 12px">✕</button>
+      </div>
     </div>
 
     <!-- MÓDULO ADMIN -->
@@ -666,6 +679,7 @@ function renderOpps(){
   const tb=g("o-body");
   if(!f.length){tb.innerHTML=`<tr><td colspan="8" style="padding:48px;text-align:center;color:var(--t5)">${opps.length===0?"No hay oportunidades aún.":"Sin resultados."}</td></tr>`;return;}
   tb.innerHTML=f.map(o=>`<tr onclick="openOpp('${o.id}')">
+    <td onclick="event.stopPropagation()" style="text-align:center"><input type="checkbox" class="opp-chk" data-id="${o.id}" onchange="updateOppSelection()" style="width:16px;height:16px;cursor:pointer"/></td>
     <td><button onclick="event.stopPropagation();cyclOppStById('${o.id}','${o.status}')" class="semaforo" style="background:${SMC[o.status]}" title="${o.status}"></button></td>
     <td><p style="margin:0;font-weight:700;font-size:13px;color:var(--t1)">${o.client_name||"—"}</p></td>
     <td><p style="margin:0;font-size:12px;color:var(--t2)">${o.name||"<span style='color:var(--t5)'>Sin nombre</span>"}</p></td>
@@ -829,6 +843,7 @@ function updateOppModalButtons(){
 
 function reportarSeguimiento(){
   if(!curOpp) return;
+  g("btn-mseg-ok").onclick=confirmarSeguimiento;
   const stage = curOpp.stage;
   const esTercero = stage === "3er Seguimiento";
 
@@ -847,6 +862,7 @@ function reportarSeguimiento(){
 
 function marcarPerdida(){
   if(!curOpp) return;
+  g("btn-mseg-ok").onclick=confirmarSeguimiento;
   g("mseg-title").textContent = "Marcar como Perdida";
   g("mseg-info").textContent = `Oferta: ${curOpp.code||curOpp.name} | Cliente: ${curOpp.client_name}`;
   g("mseg-comment").value = "";
@@ -1048,9 +1064,145 @@ async function deleteProject(id, name){
   renderAdminProjects();
 }
 
+
+// ── SELECCIÓN MÚLTIPLE ────────────────────────────────────
+let selectedOpps = new Set();
+
+function toggleAllOpps(chk){
+  document.querySelectorAll('.opp-chk').forEach(c=>{
+    c.checked = chk.checked;
+    if(chk.checked) selectedOpps.add(c.dataset.id);
+    else selectedOpps.delete(c.dataset.id);
+  });
+  updateOppSelection();
+}
+
+function updateOppSelection(){
+  selectedOpps.clear();
+  document.querySelectorAll('.opp-chk:checked').forEach(c=>selectedOpps.add(c.dataset.id));
+  const bar = g("opp-bulk-bar");
+  const count = selectedOpps.size;
+  if(count > 0){
+    g("bulk-count").textContent = count;
+    bar.style.display = "flex";
+  } else {
+    bar.style.display = "none";
+  }
+  // Update select-all checkbox state
+  const all = document.querySelectorAll('.opp-chk');
+  const chkAll = g("chk-all");
+  if(chkAll){
+    chkAll.indeterminate = count > 0 && count < all.length;
+    chkAll.checked = count > 0 && count === all.length;
+  }
+}
+
+function clearOppSelection(){
+  selectedOpps.clear();
+  document.querySelectorAll('.opp-chk').forEach(c=>c.checked=false);
+  const chkAll=g("chk-all");if(chkAll){chkAll.checked=false;chkAll.indeterminate=false;}
+  g("opp-bulk-bar").style.display="none";
+}
+
+function bulkSeguimiento(){
+  if(selectedOpps.size===0) return;
+  // Reuse seguimiento modal but in bulk mode
+  g("mseg-title").textContent = `Reportar seguimiento (${selectedOpps.size} ofertas)`;
+  g("mseg-info").textContent = `Se aplicará el mismo comentario y fecha a las ${selectedOpps.size} ofertas seleccionadas.`;
+  g("mseg-comment").value="";
+  g("mseg-fecha").value="";
+  g("mseg-fecha-wrap").style.display="block";
+  g("mseg-perdida-wrap").style.display="none";
+  g("mseg-motivo").value="";
+  // Override confirm button for bulk
+  g("btn-mseg-ok").onclick = confirmarBulkSeguimiento;
+  g("m-seguimiento").style.display="flex";
+}
+
+function bulkPerdida(){
+  if(selectedOpps.size===0) return;
+  g("mseg-title").textContent = `Marcar como Perdidas (${selectedOpps.size} ofertas)`;
+  g("mseg-info").textContent = `Se marcará como Perdida las ${selectedOpps.size} ofertas seleccionadas.`;
+  g("mseg-comment").value="";
+  g("mseg-fecha-wrap").style.display="none";
+  g("mseg-perdida-wrap").style.display="block";
+  g("mseg-motivo").value="";
+  g("btn-mseg-ok").onclick = confirmarBulkPerdida;
+  g("m-seguimiento").style.display="flex";
+}
+
+async function confirmarBulkSeguimiento(){
+  const comment = g("mseg-comment").value.trim();
+  const fecha   = g("mseg-fecha").value;
+  if(!comment){alert("Por favor escribe qué pasó en el seguimiento.");return;}
+  if(!fecha){alert("Por favor indica la fecha del próximo seguimiento.");return;}
+
+  const btn=g("btn-mseg-ok");btn.textContent="Guardando...";btn.disabled=true;
+
+  const ids = [...selectedOpps];
+  const fechaStr = new Date(fecha+"T12:00:00").toLocaleDateString("es-CO",{day:"2-digit",month:"long",year:"numeric"});
+
+  for(const id of ids){
+    try{
+      const opp = opps.find(o=>o.id===id);
+      const fc = (opp?.follow_count||0)+1;
+      const fullComment = `📞 Seguimiento #${fc}: ${comment}
+
+📅 Próximo contacto: ${fechaStr}`;
+      await db.from("opportunity_comments").insert({opportunity_id:id,user_id:CU.id,comment:fullComment});
+      await db.from("opportunities").update({
+        stage:"En espera",status:"amarillo",
+        follow_count:fc,next_follow_date:fecha,
+        updated_at:new Date().toISOString()
+      }).eq("id",id);
+      if(opp){opp.stage="En espera";opp.status="amarillo";opp.follow_count=fc;}
+    }catch(e){console.error("Error en",id,e);}
+  }
+
+  btn.textContent="Confirmar seguimiento";btn.disabled=false;
+  g("m-seguimiento").style.display="none";
+  // Restore single mode
+  g("btn-mseg-ok").onclick = confirmarSeguimiento;
+  clearOppSelection();
+  renderOpps();renderOStats();
+}
+
+async function confirmarBulkPerdida(){
+  const comment = g("mseg-comment").value.trim();
+  const motivo  = g("mseg-motivo").value.trim()||"No se obtuvo respuesta";
+  if(!comment){alert("Por favor escribe el motivo.");return;}
+
+  const btn=g("btn-mseg-ok");btn.textContent="Guardando...";btn.disabled=true;
+  const ids=[...selectedOpps];
+
+  for(const id of ids){
+    try{
+      const opp=opps.find(o=>o.id===id);
+      const fc=(opp?.follow_count||0)+1;
+      const fullComment=`📞 Seguimiento #${fc}: ${comment}
+
+📌 Motivo pérdida: ${motivo}`;
+      await db.from("opportunity_comments").insert({opportunity_id:id,user_id:CU.id,comment:fullComment});
+      await db.from("opportunities").update({
+        stage:"Perdida",status:"rojo",
+        follow_count:fc,lost_reason:motivo,
+        updated_at:new Date().toISOString()
+      }).eq("id",id);
+      if(opp){opp.stage="Perdida";opp.status="rojo";opp.follow_count=fc;}
+    }catch(e){console.error("Error en",id,e);}
+  }
+
+  btn.textContent="Confirmar seguimiento";btn.disabled=false;
+  g("m-seguimiento").style.display="none";
+  g("btn-mseg-ok").onclick=confirmarSeguimiento;
+  clearOppSelection();
+  renderOpps();renderOStats();
+}
+
 function switchModule(m){
   g("mod-tareas").style.display=m==="tareas"?"block":"none";
   g("mod-oportunidades").style.display=m==="oportunidades"?"block":"none";
+  if(m!=="oportunidades") clearOppSelection();
   g("mod-admin").style.display=m==="admin"?"block":"none";
   g("nav-t").classList.toggle("active",m==="tareas");
   g("nav-o").classList.toggle("active",m==="oportunidades");
