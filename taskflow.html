@@ -389,58 +389,79 @@ g("tgl-auth").onclick=toggleTheme;
 applyTheme();
 g("today").textContent=new Date().toLocaleDateString("es-CO",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
 
-// Mostrar botón de emergencia si tarda más de 3 segundos
-const _emergencyTimer = setTimeout(()=>{
-  const box = document.getElementById('emergency-box');
-  if(box) box.style.display='block';
-  // Si la pantalla sigue en blanco, forzar recarga
-  const appVisible = document.getElementById('app-screen')?.style?.display !== 'none';
-  const authVisible = document.getElementById('auth-screen')?.style?.display !== 'none';
-  if(!appVisible && !authVisible){
-    console.warn("Pantalla en blanco detectada — forzando recarga limpia");
-    emergencyReset();
-  }
-}, 5000);
-
-async function emergencyReset(){
+// ── MANEJO DE SESIÓN ROBUSTO ─────────────────────────────
+function clearSupabaseTokens(){
   try{
     Object.keys(localStorage)
       .filter(k=>k.includes('supabase')||k.includes('sb-')||k.includes('wcrm'))
       .forEach(k=>localStorage.removeItem(k));
-    await db.auth.signOut();
   }catch(e){}
-  window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
 }
 
-// Escuchar TODOS los cambios de auth — login, logout, refresh
-db.auth.onAuthStateChange(async(ev, sess)=>{
-  clearTimeout(_emergencyTimer);
+async function emergencyReset(){
+  clearSupabaseTokens();
+  try{await db.auth.signOut();}catch(e){}
+  window.location.href=window.location.href.split('?')[0]+'?t='+Date.now();
+}
+
+// Watchdog: si en 6 segundos no hay respuesta → limpiar y mostrar login
+const _watchdog = setTimeout(()=>{
+  const app  = document.getElementById('app-screen');
+  const auth = document.getElementById('auth-screen');
+  const appOk  = app  && app.style.display  !== 'none';
+  const authOk = auth && auth.style.display !== 'none';
+  if(!appOk && !authOk){
+    console.warn('Watchdog: pantalla en blanco — limpiando sesión');
+    clearSupabaseTokens();
+    showAuth();
+  }
+  // Mostrar botón de emergencia en login si aún no cargó
+  const box=document.getElementById('emergency-box');
+  if(box&&!appOk) box.style.display='block';
+}, 6000);
+
+let _sessionHandled = false;
+
+function handleSession(sess){
+  if(_sessionHandled) return;
+  _sessionHandled = true;
+  clearTimeout(_watchdog);
   const box=document.getElementById('emergency-box');
   if(box) box.style.display='none';
+  if(sess && sess.user){
+    CU=sess.user;
+    showApp();
+    fetchAll();
+  } else {
+    clearSupabaseTokens();
+    showAuth();
+  }
+}
 
-  if(ev==="SIGNED_IN" || ev==="TOKEN_REFRESHED" || ev==="INITIAL_SESSION"){
-    if(sess && sess.user){
-      CU=sess.user;
-      showApp();
-      await fetchAll();
-    }
-  } else if(ev==="SIGNED_OUT"){
+// Escuchar cambios de auth
+db.auth.onAuthStateChange((ev, sess)=>{
+  if(ev==='SIGNED_IN'||ev==='INITIAL_SESSION'||ev==='TOKEN_REFRESHED'){
+    handleSession(sess);
+  } else if(ev==='SIGNED_OUT'){
+    _sessionHandled=false;
     CU=null;
     showAuth();
   }
 });
 
-// Verificar sesión al cargar
+// Verificar sesión inmediatamente
 db.auth.getSession().then(({data:{session:s},error:e})=>{
-  if(e || !s){
-    try{Object.keys(localStorage).filter(k=>k.includes('supabase')||k.includes('sb-')).forEach(k=>localStorage.removeItem(k));}catch(_){}
-    clearTimeout(_emergencyTimer);
-    showAuth();
+  if(e){
+    console.error('Error sesión:',e.message);
+    clearSupabaseTokens();
+    handleSession(null);
+    return;
   }
-  // Si hay sesión, onAuthStateChange INITIAL_SESSION la maneja
-}).catch(()=>{
-  clearTimeout(_emergencyTimer);
-  showAuth();
+  handleSession(s||null);
+}).catch(e=>{
+  console.error('Excepción sesión:',e);
+  clearSupabaseTokens();
+  handleSession(null);
 });
 
 function showAuth(){g("auth-screen").style.display="flex";g("app-screen").style.display="none";}
