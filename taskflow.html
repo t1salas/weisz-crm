@@ -142,7 +142,7 @@ textarea{resize:vertical;min-height:70px}
         <div><h1 style="font-size:20px;font-weight:700;letter-spacing:-.5px;margin-bottom:3px">Oportunidades</h1><p style="color:var(--t3);font-size:12px">Seguimiento de solicitudes y ofertas</p></div>
         
       </div>
-      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:24px" id="o-stats"></div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px" id="o-stats"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
         <div style="position:relative;flex:1;min-width:180px;max-width:320px">
           <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:13px">🔍</span>
@@ -151,9 +151,8 @@ textarea{resize:vertical;min-height:70px}
         <div class="card" style="display:flex;border-radius:9px;overflow:hidden;padding:0">
           <button class="filter-btn active" id="of-Todas" onclick="setOF('Todas')">Todas</button>
           <button class="filter-btn" id="of-Oferta reciente" onclick="setOF('Oferta reciente')">Oferta reciente</button>
-          <button class="filter-btn" id="of-1er Seguimiento" onclick="setOF('1er Seguimiento')">1er Seguimiento</button>
-          <button class="filter-btn" id="of-2do Seguimiento" onclick="setOF('2do Seguimiento')">2do Seguimiento</button>
-          <button class="filter-btn" id="of-3er Seguimiento" onclick="setOF('3er Seguimiento')">3er Seguimiento</button>
+          <button class="filter-btn" id="of-Hacer seguimiento" onclick="setOF('Hacer seguimiento')">Hacer seguimiento</button>
+          <button class="filter-btn" id="of-En espera" onclick="setOF('En espera')">En espera</button>
           <button class="filter-btn" id="of-Perdida" onclick="setOF('Perdida')">Perdida</button>
         </div>
       </div>
@@ -332,7 +331,7 @@ textarea{resize:vertical;min-height:70px}
     <label class="lbl">Observación rápida</label><input type="text" id="no-note" placeholder="Nota corta importante" style="margin-bottom:14px"/>
     <label class="lbl">Fecha de envío</label><input type="date" id="no-date" style="margin-bottom:14px"/>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px">
-      <div><label class="lbl">Etapa</label><select id="no-stg"><option>Oferta reciente</option><option>1er Seguimiento</option><option>2do Seguimiento</option><option>3er Seguimiento</option><option>Perdida</option></select></div>
+      <div><label class="lbl">Etapa</label><select id="no-stg"><option>Oferta reciente</option><option>Hacer seguimiento</option><option>En espera</option><option>Perdida</option></select></div>
       <div><label class="lbl">Responsable</label><select id="no-ass"></select></div>
       <div><label class="lbl">Estado</label><select id="no-st"><option value="verde">Verde</option><option value="amarillo">Amarillo</option><option value="rojo">Rojo</option></select></div>
     </div>
@@ -362,8 +361,8 @@ const STC={"Pendiente":"#f59e0b","En progreso":"#3b82f6","Completado":"#10b981"}
 const STB={"Pendiente":"rgba(245,158,11,.12)","En progreso":"rgba(59,130,246,.12)","Completado":"rgba(16,185,129,.12)"};
 const PRC={"Alta":"#ef4444","Media":"#f97316","Baja":"#6b7280"};
 const PRB={"Alta":"rgba(239,68,68,.12)","Media":"rgba(249,115,22,.12)","Baja":"rgba(107,114,128,.12)"};
-const SGC={"Oferta reciente":"#06b6d4","1er Seguimiento":"#f59e0b","2do Seguimiento":"#3b82f6","3er Seguimiento":"#f97316","Perdida":"#ef4444"};
-const SGB={"Oferta reciente":"rgba(6,182,212,.12)","1er Seguimiento":"rgba(245,158,11,.12)","2do Seguimiento":"rgba(59,130,246,.12)","3er Seguimiento":"rgba(249,115,22,.12)","Perdida":"rgba(239,68,68,.12)"};
+const SGC={"Oferta reciente":"#06b6d4","Hacer seguimiento":"#f59e0b","En espera":"#3b82f6","Perdida":"#ef4444"};
+const SGB={"Oferta reciente":"rgba(6,182,212,.12)","Hacer seguimiento":"rgba(245,158,11,.12)","En espera":"rgba(59,130,246,.12)","Perdida":"rgba(239,68,68,.12)"};
 const SMC={"verde":"#10b981","amarillo":"#f59e0b","rojo":"#ef4444"};
 
 function applyTheme(){
@@ -654,8 +653,8 @@ async function createTask(){
 }
 
 function renderOStats(){
-  const tot=opps.length,rc=opps.filter(o=>o.stage==="Oferta reciente").length,el=opps.filter(o=>o.stage==="1er Seguimiento").length,en=opps.filter(o=>o.stage==="2do Seguimiento").length,te=opps.filter(o=>o.stage==="3er Seguimiento").length,pe=opps.filter(o=>o.stage==="Perdida").length;
-  g("o-stats").innerHTML=[{l:"Total",n:tot,c:"var(--ac)"},{l:"Oferta reciente",n:rc,c:"#06b6d4"},{l:"1er Seguimiento",n:el,c:"#f59e0b"},{l:"2do Seguimiento",n:en,c:"#3b82f6"},{l:"3er Seguimiento",n:te,c:"#f97316"},{l:"Perdidas",n:pe,c:"#ef4444"}]
+  const tot=opps.length,rc=opps.filter(o=>o.stage==="Oferta reciente").length,hs=opps.filter(o=>o.stage==="Hacer seguimiento").length,ee=opps.filter(o=>o.stage==="En espera").length,pe=opps.filter(o=>o.stage==="Perdida").length;
+  g("o-stats").innerHTML=[{l:"Total",n:tot,c:"var(--ac)"},{l:"Oferta reciente",n:rc,c:"#06b6d4"},{l:"Hacer seguimiento",n:hs,c:"#f59e0b"},{l:"En espera",n:ee,c:"#3b82f6"},{l:"Perdidas",n:pe,c:"#ef4444"}]
   .map(s=>`<div class="stat-card"><p style="color:var(--t3);font-size:10px;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">${s.l}</p><p style="font-size:30px;font-weight:700;margin-bottom:10px;color:${s.c};font-family:'DM Mono',monospace">${s.n}</p><div style="height:3px;background:var(--pill);border-radius:2px"><div style="height:100%;width:${tot?(s.n/tot*100):0}%;background:${s.c};border-radius:2px;transition:width .6s ease"></div></div></div>`).join("");
 }
 
@@ -701,7 +700,10 @@ function cyclOppStg(){if(curOpp)cyclOppStgById(curOpp.id,curOpp.stage);}
 async function openOpp(id){
   curOpp=opps.find(o=>o.id===id);if(!curOpp)return;
   g("mo-client").textContent=curOpp.client_name||"Sin cliente";
-  const nm=g("mo-name");nm.textContent=curOpp.name||"";nm.style.display=curOpp.name?"block":"none";
+  const nm=g("mo-name");
+  const fc=curOpp.follow_count||0;
+  nm.innerHTML=(curOpp.name||"")+(fc>0?` <span style="font-size:11px;font-weight:700;background:rgba(245,158,11,.15);color:#f59e0b;padding:2px 8px;border-radius:20px;margin-left:6px">📞 Seguimiento #${fc}</span>`:"");
+  nm.style.display="block";
   const sb=g("mo-subj");sb.textContent=curOpp.email_subject?"📧 "+curOpp.email_subject:"";sb.style.display=curOpp.email_subject?"block":"none";
   g("mo-sem").style.background=SMC[curOpp.status];
   const stb=g("mo-stage");stb.textContent=curOpp.stage;stb.style.color=SGC[curOpp.stage];stb.style.background=SGB[curOpp.stage];stb.style.border=`1px solid ${SGC[curOpp.stage]}44`;
@@ -811,8 +813,8 @@ async function createOpp(){
 
 
 // ── SEGUIMIENTO ──────────────────────────────────────────
-const STAGE_ORDER = ["Oferta reciente","1er Seguimiento","2do Seguimiento","3er Seguimiento","Perdida"];
-const STAGE_SEGUIMIENTO = ["1er Seguimiento","2do Seguimiento","3er Seguimiento"];
+const STAGE_ORDER = ["Oferta reciente","Hacer seguimiento","En espera","Perdida"];
+const STAGE_SEGUIMIENTO = ["Hacer seguimiento","En espera"];
 
 function updateOppModalButtons(){
   const btnSeg  = g("btn-seguimiento");
@@ -830,15 +832,15 @@ function reportarSeguimiento(){
   const stage = curOpp.stage;
   const esTercero = stage === "3er Seguimiento";
 
-  g("mseg-title").textContent = esTercero ? "Cerrar seguimiento" : "Reportar seguimiento";
+  g("mseg-title").textContent = "Reportar seguimiento";
   g("mseg-info").textContent = `Oferta: ${curOpp.code||curOpp.name} | Cliente: ${curOpp.client_name} | Etapa actual: ${stage}`;
   g("mseg-comment").value = "";
   g("mseg-fecha").value = "";
 
   // Si es 3er seguimiento → mostrar campo motivo perdida
-  g("mseg-fecha-wrap").style.display  = esTercero ? "none"  : "block";
-  g("mseg-perdida-wrap").style.display = esTercero ? "block" : "none";
-  g("mseg-motivo").value = esTercero ? "No se obtuvo respuesta" : "";
+  g("mseg-fecha-wrap").style.display  = "block";
+  g("mseg-perdida-wrap").style.display = "none";
+  g("mseg-motivo").value = "";
 
   g("m-seguimiento").style.display = "flex";
 }
@@ -859,8 +861,6 @@ async function confirmarSeguimiento(){
   const fecha    = g("mseg-fecha").value;
   const motivo   = g("mseg-motivo").value.trim() || "No se obtuvo respuesta";
   const esPerdida = g("mseg-perdida-wrap").style.display !== "none";
-  const esTercero = curOpp.stage === "3er Seguimiento";
-
   if(!comment){ alert("Por favor escribe qué pasó en el seguimiento."); return; }
   if(!esPerdida && !fecha){ alert("Por favor indica la fecha del próximo seguimiento."); return; }
 
@@ -870,21 +870,24 @@ async function confirmarSeguimiento(){
   try {
     // Determinar nueva etapa
     let newStage = curOpp.stage;
-    if(esPerdida || esTercero){
+    if(esPerdida){
       newStage = "Perdida";
     } else {
-      const idx = STAGE_ORDER.indexOf(curOpp.stage);
-      newStage = STAGE_ORDER[Math.min(idx+1, STAGE_ORDER.length-1)];
+      // Reportar seguimiento → En espera (esperando respuesta)
+      newStage = "En espera";
     }
 
+    // Incrementar contador de seguimientos
+    const newFollowCount = (curOpp.follow_count||0) + 1;
+
     // Texto del comentario completo
-    let fullComment = comment;
-    if(esPerdida || esTercero) fullComment += `
+    let fullComment = `📞 Seguimiento #${newFollowCount}: ${comment}`;
+    if(esPerdida) fullComment += `
 
 📌 Motivo pérdida: ${motivo}`;
     else fullComment += `
 
-📅 Próximo seguimiento: ${new Date(fecha+"T12:00:00").toLocaleDateString("es-CO",{day:"2-digit",month:"long",year:"numeric"})}`;
+📅 Próximo contacto: ${new Date(fecha+"T12:00:00").toLocaleDateString("es-CO",{day:"2-digit",month:"long",year:"numeric"})}`;
 
     // Guardar comentario
     await db.from("opportunity_comments").insert({
@@ -896,18 +899,19 @@ async function confirmarSeguimiento(){
     // Actualizar etapa, estado y fecha próximo seguimiento
     const updateData = {
       stage: newStage,
-      status: newStage === "Perdida" ? "rojo" : "amarillo",
+      status: newStage === "Perdida" ? "rojo" : newStage === "En espera" ? "amarillo" : "amarillo",
+      follow_count: newFollowCount,
       updated_at: new Date().toISOString()
     };
     if(fecha) updateData.next_follow_date = fecha;
-    if(esPerdida || esTercero) updateData.lost_reason = motivo;
+    if(esPerdida) updateData.lost_reason = motivo;
 
     await db.from("opportunities").update(updateData).eq("id", curOpp.id);
 
     // Actualizar local
     const o = opps.find(x=>x.id===curOpp.id);
-    if(o){ o.stage=newStage; o.status=updateData.status; }
-    curOpp.stage=newStage; curOpp.status=updateData.status;
+    if(o){ o.stage=newStage; o.status=updateData.status; o.follow_count=newFollowCount; }
+    curOpp.stage=newStage; curOpp.status=updateData.status; curOpp.follow_count=newFollowCount;
 
     // Cerrar modal seguimiento y refrescar
     g("m-seguimiento").style.display="none";
