@@ -557,31 +557,47 @@ function switchTaskTab(tab){
 async function loadTaskFiles(taskId){
   const el=g("mt-files-list");
   el.innerHTML=`<p style="color:var(--t5);font-size:12px;text-align:center;padding:16px">Cargando archivos...</p>`;
-  const{data}=await db.from("task_files").select("*,uploader:users!task_files_uploaded_by_fkey(name)").eq("task_id",taskId).order("created_at",{ascending:false});
+  const{data}=await db.from("task_files").select("id,original_name,storage_path,size_bytes,uploaded_by,created_at").eq("task_id",taskId).order("created_at",{ascending:false});
+  const umap={};users.forEach(u=>umap[u.id]=u.name);
   if(!data||!data.length){el.innerHTML=`<p style="color:var(--t5);font-size:12px;text-align:center;padding:24px">Sin archivos adjuntos.</p>`;return;}
   el.innerHTML=data.map(f=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--inp);border:1px solid var(--bor);border-radius:8px;margin-bottom:8px">
     <div style="display:flex;align-items:center;gap:10px">
       <span style="font-size:20px">📄</span>
       <div><p style="margin:0;font-size:13px;font-weight:600;color:var(--t1)">${f.original_name}</p>
-      <p style="margin:0;font-size:10px;color:var(--t3)">${f.uploader?.name||"Usuario"} · ${fdt(f.created_at)} · ${(f.size_bytes/1024).toFixed(0)} KB</p></div>
+      <p style="margin:0;font-size:10px;color:var(--t3)">${umap[f.uploaded_by]||"Usuario"} · ${fdt(f.created_at)} · ${(f.size_bytes/1024).toFixed(0)} KB</p></div>
     </div>
     <button onclick="dlTaskFile('${f.storage_path}','${f.original_name}')" class="btn btn-s" style="padding:6px 12px;font-size:11px">⬇ Descargar</button>
   </div>`).join("");
 }
 
 async function loadTaskCmts(taskId){
-  // Reset to actividad tab
   switchTaskTab('actividad');
   const el=g("mt-cmts");
   el.innerHTML=`<p style="color:var(--t5);font-size:12px;text-align:center;padding:16px">Cargando...</p>`;
-  const{data}=await db.from("task_comments").select("*,user:users!task_comments_user_id_fkey(id,name),files:task_files(id,original_name,storage_path)").eq("task_id",taskId).order("created_at",{ascending:true});
-  if(!data||!data.length){el.innerHTML=`<p style="color:var(--t5);font-size:12px;text-align:center;padding:16px">Sin actividad aún. ¡Escribe el primer comentario!</p>`;return;}
-  el.innerHTML=data.map(c=>`<div style="display:flex;gap:10px;margin-bottom:16px">
-    <div style="width:28px;height:28px;border-radius:50%;background:${avc(c.user?.name||"?")};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;flex-shrink:0">${ini(c.user?.name||"?")}</div>
-    <div style="flex:1"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:12px;font-weight:600;color:var(--t1)">${c.user?.name||"Usuario"}</span><span style="font-size:10px;color:var(--t5)">${fdt(c.created_at)}</span></div>
+  
+  // Fetch comments and files separately to avoid JOIN ambiguity
+  const[{data:cmts},{data:fils}]=await Promise.all([
+    db.from("task_comments").select("id,task_id,user_id,comment,created_at").eq("task_id",taskId).order("created_at",{ascending:true}),
+    db.from("task_files").select("id,task_id,original_name,storage_path").eq("task_id",taskId)
+  ]);
+  
+  if(!cmts||!cmts.length){el.innerHTML=`<p style="color:var(--t5);font-size:12px;text-align:center;padding:16px">Sin actividad aún. ¡Escribe el primer comentario!</p>`;return;}
+  
+  // Build a map of user names from already-loaded users array
+  const umap={};users.forEach(u=>umap[u.id]=u.name);
+  // Map files by comment id
+  const fmap={};(fils||[]).forEach(f=>{if(!fmap[f.task_id])fmap[f.task_id]=[];fmap[f.task_id].push(f);});
+  
+  el.innerHTML=cmts.map(c=>{
+    const uname=umap[c.user_id]||"Usuario";
+    const cfiles=(fils||[]).filter(f=>f.task_id===c.task_id&&f.storage_path?.includes(c.id));
+    return`<div style="display:flex;gap:10px;margin-bottom:16px">
+    <div style="width:28px;height:28px;border-radius:50%;background:${avc(uname)};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;flex-shrink:0">${ini(uname)}</div>
+    <div style="flex:1"><div style="display:flex;align-items:center;gap:8px;margin-bottom:4px"><span style="font-size:12px;font-weight:600;color:var(--t1)">${uname}</span><span style="font-size:10px;color:var(--t5)">${fdt(c.created_at)}</span></div>
     <div class="cbox"><p style="margin:0;font-size:13px;color:var(--t2);line-height:1.5">${c.comment}</p>
-    ${c.files&&c.files.length?c.files.map(f=>`<button onclick="dlTaskFile('${f.storage_path}','${f.original_name}')" style="display:flex;align-items:center;gap:6px;margin-top:8px;background:var(--pill);border:1px solid var(--bor);border-radius:6px;padding:5px 10px;cursor:pointer;font-family:inherit;color:var(--acs);font-size:11px;font-weight:600">&#x1F4CE; ${f.original_name}</button>`).join(""):""}
-    </div></div></div>`).join("");
+    ${cfiles.length?cfiles.map(f=>`<button onclick="dlTaskFile('${f.storage_path}','${f.original_name}')" style="display:flex;align-items:center;gap:6px;margin-top:8px;background:var(--pill);border:1px solid var(--bor);border-radius:6px;padding:5px 10px;cursor:pointer;font-family:inherit;color:var(--acs);font-size:11px;font-weight:600">&#x1F4CE; ${f.original_name}</button>`).join(""):""}
+    </div></div></div>`;
+  }).join("");
 }
 
 function prevTaskFile(input){
