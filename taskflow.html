@@ -394,41 +394,43 @@ const _emergencyTimer = setTimeout(()=>{
 
 async function emergencyReset(){
   try{
-    // Limpiar TODO el localStorage relacionado con supabase
     Object.keys(localStorage)
       .filter(k=>k.includes('supabase')||k.includes('sb-')||k.includes('wcrm'))
       .forEach(k=>localStorage.removeItem(k));
     await db.auth.signOut();
   }catch(e){}
-  // Forzar recarga limpia
   window.location.href = window.location.href.split('?')[0] + '?t=' + Date.now();
 }
 
-db.auth.getSession().then(async ({data:{session:s}, error:e})=>{
+// Escuchar TODOS los cambios de auth — login, logout, refresh
+db.auth.onAuthStateChange(async(ev, sess)=>{
   clearTimeout(_emergencyTimer);
-  const box = document.getElementById('emergency-box');
+  const box=document.getElementById('emergency-box');
   if(box) box.style.display='none';
 
-  if(e || !s || !s.user){
-    try{
-      Object.keys(localStorage)
-        .filter(k=>k.includes('supabase')||k.includes('sb-'))
-        .forEach(k=>localStorage.removeItem(k));
-    }catch(_){}
+  if(ev==="SIGNED_IN" || ev==="TOKEN_REFRESHED" || ev==="INITIAL_SESSION"){
+    if(sess && sess.user){
+      CU=sess.user;
+      showApp();
+      await fetchAll();
+    }
+  } else if(ev==="SIGNED_OUT"){
+    CU=null;
     showAuth();
-    return;
   }
-  CU = s.user;
-  showApp();
-  await fetchAll();
-}).catch(async()=>{
-  clearTimeout(_emergencyTimer);
-  try{await db.auth.signOut();}catch(_){}
-  showAuth();
 });
 
-db.auth.onAuthStateChange((ev,sess)=>{
-  if(ev==="SIGNED_OUT"){CU=null;showAuth();}
+// Verificar sesión al cargar
+db.auth.getSession().then(({data:{session:s},error:e})=>{
+  if(e || !s){
+    try{Object.keys(localStorage).filter(k=>k.includes('supabase')||k.includes('sb-')).forEach(k=>localStorage.removeItem(k));}catch(_){}
+    clearTimeout(_emergencyTimer);
+    showAuth();
+  }
+  // Si hay sesión, onAuthStateChange INITIAL_SESSION la maneja
+}).catch(()=>{
+  clearTimeout(_emergencyTimer);
+  showAuth();
 });
 
 function showAuth(){g("auth-screen").style.display="flex";g("app-screen").style.display="none";}
