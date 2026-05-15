@@ -102,7 +102,7 @@ textarea{resize:vertical;min-height:70px}
         <div id="u-av" style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;color:white"></div>
         <div style="flex:1;min-width:0"><p id="u-name" style="margin:0;font-size:12px;font-weight:600;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></p><p style="margin:0;font-size:10px;color:var(--t3)">Miembro activo</p></div>
       </div>
-      <button class="btn btn-s" onclick="db.auth.signOut()" style="width:100%;padding:7px;font-size:11px">Cerrar sesión</button>
+      <button class="btn btn-s" onclick="doLogout()" style="width:100%;padding:7px;font-size:11px">Cerrar sesión</button>
     </div>
   </div>
 
@@ -366,12 +366,64 @@ g("tgl-auth").onclick=toggleTheme;
 applyTheme();
 g("today").textContent=new Date().toLocaleDateString("es-CO",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
 
+// Manejo robusto de sesión con timeout y retry
+let _appLoaded = false;
+let _loadTimeout = null;
+
+async function initApp(sess){
+  if(_appLoaded) return;
+  _appLoaded = true;
+  clearTimeout(_loadTimeout);
+  CU = sess.user;
+  showApp();
+  try {
+    await fetchAll();
+  } catch(e) {
+    console.error("Error cargando datos:", e);
+    // Intentar de nuevo en 2 segundos
+    setTimeout(()=>fetchAll(), 2000);
+  }
+}
+
 db.auth.onAuthStateChange(async(ev,sess)=>{
-  if(sess){CU=sess.user;showApp();await fetchAll();}
-  else{CU=null;showAuth();}
+  if(ev === "SIGNED_OUT" || ev === "TOKEN_REFRESHED"){
+    _appLoaded = false;
+  }
+  if(sess){
+    await initApp(sess);
+  } else {
+    _appLoaded = false;
+    CU = null;
+    showAuth();
+  }
 });
+
+// Timeout de seguridad — si en 8 segundos no carga, fuerza logout limpio
+_loadTimeout = setTimeout(async()=>{
+  if(!_appLoaded){
+    console.warn("Timeout de sesión — limpiando...");
+    try {
+      await db.auth.signOut();
+    } catch(e){}
+    _appLoaded = false;
+    CU = null;
+    showAuth();
+  }
+}, 8000);
+
 db.auth.getSession().then(({data:{session:s}})=>{
-  if(s){CU=s.user;showApp();fetchAll();}else showAuth();
+  if(s){
+    initApp(s);
+  } else {
+    clearTimeout(_loadTimeout);
+    _appLoaded = false;
+    showAuth();
+  }
+}).catch(async(e)=>{
+  console.error("Error obteniendo sesión:", e);
+  clearTimeout(_loadTimeout);
+  try { await db.auth.signOut(); } catch(_){}
+  showAuth();
 });
 
 function showAuth(){g("auth-screen").style.display="flex";g("app-screen").style.display="none";}
@@ -409,6 +461,13 @@ async function doAuth(){
     }
   }
   g("a-btn").textContent=authMode==="login"?"Entrar al sistema":"Crear cuenta";
+}
+
+async function doLogout(){
+  _appLoaded=false;CU=null;
+  try{await db.auth.signOut();}catch(e){}
+  try{Object.keys(localStorage).filter(k=>k.includes('supabase')).forEach(k=>localStorage.removeItem(k));}catch(e){}
+  showAuth();
 }
 
 async function fetchAll(){
