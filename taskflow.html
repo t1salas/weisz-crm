@@ -366,64 +366,25 @@ g("tgl-auth").onclick=toggleTheme;
 applyTheme();
 g("today").textContent=new Date().toLocaleDateString("es-CO",{weekday:"long",year:"numeric",month:"long",day:"numeric"});
 
-// Manejo robusto de sesión con timeout y retry
-let _appLoaded = false;
-let _loadTimeout = null;
-
-async function initApp(sess){
-  if(_appLoaded) return;
-  _appLoaded = true;
-  clearTimeout(_loadTimeout);
-  CU = sess.user;
-  showApp();
-  try {
-    await fetchAll();
-  } catch(e) {
-    console.error("Error cargando datos:", e);
-    // Intentar de nuevo en 2 segundos
-    setTimeout(()=>fetchAll(), 2000);
-  }
-}
-
-db.auth.onAuthStateChange(async(ev,sess)=>{
-  if(ev === "SIGNED_OUT" || ev === "TOKEN_REFRESHED"){
-    _appLoaded = false;
-  }
-  if(sess){
-    await initApp(sess);
-  } else {
-    _appLoaded = false;
-    CU = null;
+// Inicialización única y limpia
+db.auth.getSession().then(async ({data:{session:s}, error:e})=>{
+  if(e || !s || !s.user){
+    // Limpiar tokens corruptos y mostrar login
+    try{Object.keys(localStorage).filter(k=>k.includes('supabase')||k.includes('sb-')).forEach(k=>localStorage.removeItem(k));}catch(_){}
     showAuth();
+    return;
   }
+  CU = s.user;
+  showApp();
+  await fetchAll();
 });
 
-// Timeout de seguridad — si en 8 segundos no carga, fuerza logout limpio
-_loadTimeout = setTimeout(async()=>{
-  if(!_appLoaded){
-    console.warn("Timeout de sesión — limpiando...");
-    try {
-      await db.auth.signOut();
-    } catch(e){}
-    _appLoaded = false;
-    CU = null;
+// Solo escuchar cambios reales (logout manual, expiración)
+db.auth.onAuthStateChange((ev, sess)=>{
+  if(ev==="SIGNED_OUT"){
+    CU=null;
     showAuth();
   }
-}, 8000);
-
-db.auth.getSession().then(({data:{session:s}})=>{
-  if(s){
-    initApp(s);
-  } else {
-    clearTimeout(_loadTimeout);
-    _appLoaded = false;
-    showAuth();
-  }
-}).catch(async(e)=>{
-  console.error("Error obteniendo sesión:", e);
-  clearTimeout(_loadTimeout);
-  try { await db.auth.signOut(); } catch(_){}
-  showAuth();
 });
 
 function showAuth(){g("auth-screen").style.display="flex";g("app-screen").style.display="none";}
