@@ -64,11 +64,7 @@ textarea{resize:vertical;min-height:70px}
       <p style="color:var(--t3);font-size:11px;letter-spacing:3px;text-transform:uppercase">Sistema CRM</p>
     </div>
     <div class="card" style="padding:28px;box-shadow:0 8px 40px var(--sh)">
-      <div style="display:flex;background:var(--inp);border-radius:10px;padding:4px;margin-bottom:22px">
-        <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Iniciar sesión</button>
-        <button class="tab-btn" id="tab-reg" onclick="switchTab('register')">Registrarse</button>
-      </div>
-      <div id="fld-name" style="display:none;margin-bottom:14px"><label class="lbl">Nombre completo</label><input type="text" id="a-name" placeholder="Tu nombre"/></div>
+      <div id="fld-name" style="display:none"><input type="text" id="a-name"/></div>
       <div style="margin-bottom:14px"><label class="lbl">Email</label><input type="email" id="a-email" placeholder="tu@weisz.com.co"/></div>
       <div style="margin-bottom:20px"><label class="lbl">Contraseña</label><input type="password" id="a-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAuth()"/></div>
       <div id="a-err" style="display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);border-radius:8px;padding:8px 12px;color:#ef4444;font-size:12px;margin-bottom:14px"></div>
@@ -1007,16 +1003,30 @@ function openNewUser(){
 async function createUser(){
   const name=g("nu-name").value.trim(), email=g("nu-email").value.trim(), pass=g("nu-pass").value, role=g("nu-role").value;
   if(!name||!email||!pass){alert("Completa todos los campos");return;}
+  if(pass.length<8){alert("La contraseña debe tener al menos 8 caracteres");return;}
   const btn=g("btn-nu");btn.textContent="Creando...";btn.disabled=true;
-  const{data,error}=await db.auth.admin?.createUser({email,password:pass,user_metadata:{name}});
-  // Si no hay admin API, usar signUp
-  const{data:sd,error:se}=await db.auth.signUp({email,password:pass,options:{data:{name}}});
-  const uid=sd?.user?.id;
-  if(uid) await db.from("users").upsert({id:uid,name,email,role,active:true});
+  try{
+    // Usar service_role para crear usuario sin confirmación de email
+    const resp = await fetch("https://jvxssobcjtkdcfdsqnst.supabase.co/auth/v1/admin/users",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "apikey":"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2eHNzb2JjanRrZGNmZHNxbnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODc0OTEzMSwiZXhwIjoyMDk0MzI1MTMxfQ.Mhyff-sRZvRLJF2r_6iZ6u1T71jDlkCKv6X0A19yF8k",
+        "Authorization":"Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp2eHNzb2JjanRrZGNmZHNxbnN0Iiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3ODc0OTEzMSwiZXhwIjoyMDk0MzI1MTMxfQ.Mhyff-sRZvRLJF2r_6iZ6u1T71jDlkCKv6X0A19yF8k"
+      },
+      body:JSON.stringify({email,password:pass,email_confirm:true,user_metadata:{name}})
+    });
+    const data=await resp.json();
+    if(!resp.ok){alert("Error: "+(data.msg||data.message||"No se pudo crear el usuario"));btn.textContent="Crear usuario";btn.disabled=false;return;}
+    const uid=data.id;
+    if(uid) await db.from("users").upsert({id:uid,name,email,role,active:true});
+    g("m-newuser").style.display="none";
+    alert(`✅ Usuario ${name} creado. Ya puede iniciar sesión con su email y contraseña.`);
+    renderAdminUsers();
+  }catch(e){
+    alert("Error: "+e.message);
+  }
   btn.textContent="Crear usuario";btn.disabled=false;
-  if(se){alert("Error: "+se.message);return;}
-  g("m-newuser").style.display="none";
-  renderAdminUsers();
 }
 
 async function renderAdminProjects(){
