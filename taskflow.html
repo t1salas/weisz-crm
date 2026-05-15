@@ -56,6 +56,8 @@ textarea{resize:vertical;min-height:70px}
 </style>
 </head>
 <body>
+<!-- Botón de emergencia siempre visible -->
+<button id="emergency-btn" onclick="emergencyReset()" title="Restablecer sesión" style="position:fixed;bottom:16px;right:16px;z-index:9999;width:36px;height:36px;border-radius:50%;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;opacity:0.4;transition:opacity .2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.4'">🔄</button>
 
 <div id="auth-screen" style="display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px">
   <button class="toggle" id="tgl-auth" style="position:fixed;top:20px;right:20px" title="Tema"></button>
@@ -246,9 +248,9 @@ textarea{resize:vertical;min-height:70px}
           <div id="mt-fprev" style="display:none;margin-top:6px;background:var(--pill);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--acs);align-items:center;gap:6px"></div>
         </div>
         <div style="display:flex;flex-direction:column;gap:6px">
-          <button class="btn btn-s" onclick="document.getElementById('mt-file').click()" style="padding:10px 12px;font-size:16px" title="Adjuntar">&#x1F4CE;</button>
-          <input type="file" id="mt-file" style="display:none" onchange="prevTaskFile(this)"/>
-          <button class="btn btn-p" id="btn-tcmt" onclick="addTaskCmt()" style="padding:10px 16px">&#x2191;</button>
+          <input type="file" id="mt-file" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" onchange="prevTaskFile(this)"/>
+          <button class="btn btn-s" onclick="document.getElementById('mt-file').click()" style="padding:10px 12px;font-size:16px;width:44px;height:44px" title="Adjuntar">📎</button>
+          <button class="btn btn-p" id="btn-tcmt" onclick="addTaskCmt()" style="padding:10px 16px;width:44px;height:44px">↑</button>
         </div>
       </div>
     </div>
@@ -311,10 +313,10 @@ textarea{resize:vertical;min-height:70px}
           <textarea id="mo-txt" placeholder="Escribe un comentario o pasa el balón..."></textarea>
           <div id="mo-fprev" style="display:none;margin-top:6px;background:var(--pill);border-radius:6px;padding:4px 10px;font-size:11px;color:var(--acs);align-items:center;gap:6px"></div>
         </div>
-        <div style="display:flex;flex-direction:column;gap:6px">
-          <button class="btn btn-s" onclick="document.getElementById('mo-file').click()" style="padding:10px 12px;font-size:16px" title="Adjuntar">&#x1F4CE;</button>
-          <input type="file" id="mo-file" style="display:none" onchange="prevFile(this)"/>
-          <button class="btn btn-p" id="btn-cmt" onclick="addCmt()" style="padding:10px 16px">&#x2191;</button>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          <input type="file" id="mo-file" style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none" onchange="prevFile(this)"/>
+          <button class="btn btn-s" onclick="document.getElementById('mo-file').click()" style="padding:10px 12px;font-size:16px;width:44px;height:44px" title="Adjuntar">📎</button>
+          <button class="btn btn-p" id="btn-cmt" onclick="addCmt()" style="padding:10px 16px;width:44px;height:44px">↑</button>
         </div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;flex-wrap:wrap;gap:8px">
@@ -391,7 +393,14 @@ g("today").textContent=new Date().toLocaleDateString("es-CO",{weekday:"long",yea
 const _emergencyTimer = setTimeout(()=>{
   const box = document.getElementById('emergency-box');
   if(box) box.style.display='block';
-}, 3000);
+  // Si la pantalla sigue en blanco, forzar recarga
+  const appVisible = document.getElementById('app-screen')?.style?.display !== 'none';
+  const authVisible = document.getElementById('auth-screen')?.style?.display !== 'none';
+  if(!appVisible && !authVisible){
+    console.warn("Pantalla en blanco detectada — forzando recarga limpia");
+    emergencyReset();
+  }
+}, 5000);
 
 async function emergencyReset(){
   try{
