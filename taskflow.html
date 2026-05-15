@@ -87,7 +87,7 @@ textarea{resize:vertical;min-height:70px}
     <nav style="padding:12px 10px;flex:1;overflow-y:auto">
       <div class="nav-item active" id="nav-t" onclick="switchModule('tareas')">✓ Tareas</div>
       <div class="nav-item" id="nav-o" onclick="switchModule('oportunidades')">📋 Oportunidades</div>
-      <div class="nav-item" id="nav-a" onclick="switchModule('admin')" style="display:none" id="nav-admin">⚙️ Administración</div>
+      <div class="nav-item" id="nav-admin" onclick="switchModule('admin')" style="display:none">⚙️ Administración</div>
       <div style="margin-top:20px;padding:0 4px">
         <p style="font-size:10px;color:var(--t5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding:0 8px">Proyectos</p>
         <div id="proj-list"></div>
@@ -439,6 +439,11 @@ function showApp(){
   const n=CU?.user_metadata?.name||CU?.email?.split("@")[0]||"Usuario";
   const av=g("u-av");av.textContent=ini(n);av.style.background=avc(n);
   g("u-name").textContent=n;
+  // Mostrar menu admin si corresponde
+  db.from("users").select("role").eq("id",CU.id).single().then(({data})=>{
+    const navA=document.getElementById("nav-admin");
+    if(navA) navA.style.display=data?.role==="admin"?"flex":"none";
+  });
 }
 
 let authMode="login";
