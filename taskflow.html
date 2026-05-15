@@ -557,7 +557,7 @@ function switchTaskTab(tab){
 async function loadTaskFiles(taskId){
   const el=g("mt-files-list");
   el.innerHTML=`<p style="color:var(--t5);font-size:12px;text-align:center;padding:16px">Cargando archivos...</p>`;
-  const{data}=await db.from("task_files").select("*,uploader:users(name)").eq("task_id",taskId).order("created_at",{ascending:false});
+  const{data}=await db.from("task_files").select("*,uploader:users!task_files_uploaded_by_fkey(name)").eq("task_id",taskId).order("created_at",{ascending:false});
   if(!data||!data.length){el.innerHTML=`<p style="color:var(--t5);font-size:12px;text-align:center;padding:24px">Sin archivos adjuntos.</p>`;return;}
   el.innerHTML=data.map(f=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--inp);border:1px solid var(--bor);border-radius:8px;margin-bottom:8px">
     <div style="display:flex;align-items:center;gap:10px">
@@ -574,7 +574,7 @@ async function loadTaskCmts(taskId){
   switchTaskTab('actividad');
   const el=g("mt-cmts");
   el.innerHTML=`<p style="color:var(--t5);font-size:12px;text-align:center;padding:16px">Cargando...</p>`;
-  const{data}=await db.from("task_comments").select("*,user:users(id,name),files:task_files(id,original_name,storage_path)").eq("task_id",taskId).order("created_at",{ascending:true});
+  const{data}=await db.from("task_comments").select("*,user:users!task_comments_user_id_fkey(id,name),files:task_files(id,original_name,storage_path)").eq("task_id",taskId).order("created_at",{ascending:true});
   if(!data||!data.length){el.innerHTML=`<p style="color:var(--t5);font-size:12px;text-align:center;padding:16px">Sin actividad aún. ¡Escribe el primer comentario!</p>`;return;}
   el.innerHTML=data.map(c=>`<div style="display:flex;gap:10px;margin-bottom:16px">
     <div style="width:28px;height:28px;border-radius:50%;background:${avc(c.user?.name||"?")};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;flex-shrink:0">${ini(c.user?.name||"?")}</div>
