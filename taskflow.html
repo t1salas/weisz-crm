@@ -491,6 +491,61 @@ async function fetchAll(){
   ]);
   tasks=t.data||[];projects=p.data||[];users=u.data||[];opps=o.data||[];
   renderProj();renderTasks();renderTStats();renderOpps();renderOStats();populateSel();
+  applyRolePermissions();
+}
+
+let CU_ROLE = "usuario";
+
+async function applyRolePermissions(){
+  const{data}=await db.from("users").select("role").eq("id",CU.id).single();
+  CU_ROLE = data?.role || "usuario";
+
+  const isLector = CU_ROLE === "lector";
+
+  // Ocultar botones de acción para lectores
+  const actionBtns = [
+    "btn-add-comment",   // comentar en opp (no existe con este id, se aplica por clase)
+  ];
+
+  // Botón nueva tarea
+  const btnNuevaTarea = document.querySelector('[onclick="openNewTask()"]');
+  if(btnNuevaTarea) btnNuevaTarea.style.display = isLector ? "none" : "";
+
+  // Botones de avanzar estado y eliminar en modales — se controlan al abrir
+  // Área de comentarios en tareas y oportunidades
+  document.querySelectorAll('#mt-txt, #mo-txt, #btn-tcmt, #btn-cmt, #mt-file, #mo-file').forEach(el=>{
+    if(el) el.style.display = isLector ? "none" : "";
+  });
+
+  // Botones de seguimiento
+  document.querySelectorAll('#btn-seguimiento, #btn-perdida').forEach(el=>{
+    if(el) el.style.display = isLector ? "none" : "";
+  });
+
+  // Checkboxes de selección múltiple
+  document.querySelectorAll('.opp-chk, #chk-all').forEach(el=>{
+    if(el) el.style.display = isLector ? "none" : "";
+  });
+
+  // Botones eliminar en tabla de tareas — se controlan en renderTasks
+  if(isLector){
+    // Agregar CSS global para lectores
+    let style = document.getElementById("lector-style");
+    if(!style){
+      style = document.createElement("style");
+      style.id = "lector-style";
+      style.textContent = `
+        .btn-d { display: none !important; }
+        [onclick="openNewTask()"] { display: none !important; }
+        [onclick="openNewOpp()"] { display: none !important; }
+        #btn-seguimiento, #btn-perdida { display: none !important; }
+        .opp-chk, #chk-all { display: none !important; }
+        #mt-txt, #mo-txt { pointer-events: none; opacity: 0.5; }
+        #btn-tcmt, #btn-cmt, #mt-file, #mo-file { display: none !important; }
+      `;
+      document.head.appendChild(style);
+    }
+  }
 }
 
 function renderProj(){
@@ -532,7 +587,7 @@ function renderTasks(){
       <td style="font-size:12px;color:var(--t3);font-family:'DM Mono',monospace">${fd(t.deadline)}</td>
       <td><span style="font-size:11px;font-weight:600;color:${PRC[t.priority]};background:${PRB[t.priority]};padding:3px 9px;border-radius:5px">${t.priority}</span></td>
       <td><button onclick="event.stopPropagation();cyclTask('${t.id}','${t.status}')" style="display:flex;align-items:center;gap:5px;background:${STB[t.status]};border:1px solid ${STC[t.status]}44;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit"><span class="dot" style="background:${STC[t.status]};width:6px;height:6px"></span><span style="font-size:11px;font-weight:600;color:${STC[t.status]}">${t.status}</span></button></td>
-      <td><button onclick="event.stopPropagation();delTask('${t.id}')" style="background:none;border:none;color:var(--t5);cursor:pointer;font-size:14px;padding:4px 8px;border-radius:6px" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--t5)'">&#x2715;</button></td>
+      <td>${CU_ROLE!=='lector'?`<button onclick="event.stopPropagation();delTask('${t.id}')" style="background:none;border:none;color:var(--t5);cursor:pointer;font-size:14px;padding:4px 8px;border-radius:6px" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--t5)'">&#x2715;</button>`:''}</td>
     </tr>`).join("");
   }else{
     const kv=g("t-kanban");
@@ -562,6 +617,12 @@ function openTask(id){
   .map(f=>`<div style="background:var(--inp);border:1px solid var(--bor);border-radius:9px;padding:11px 13px"><p style="margin:0 0 3px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">${f.l}</p><p style="margin:0;font-size:13px;font-weight:600;color:${f.c||"var(--t1)"}">${f.v}</p></div>`).join("");
   g("mt-txt").value="";pendTaskFile=null;g("mt-fprev").style.display="none";
   g("m-task").style.display="flex";
+  // Aplicar permisos de rol
+  const isLector = CU_ROLE==="lector";
+  const advBtn=document.querySelector('[onclick="advTaskStatus()"]');
+  const delBtn=document.querySelector('[onclick="delCurTask()"]');
+  if(advBtn) advBtn.style.display=isLector?"none":"";
+  if(delBtn) delBtn.style.display=isLector?"none":"";
   loadTaskCmts(id);
 }
 
