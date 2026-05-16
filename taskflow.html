@@ -1,4 +1,68 @@
-<margin-bottom:32px">
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>CRM Weisz</title>
+<link rel="icon" type="image/png" href="data:image/png;base64,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"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0f13;--sb:#0a0a0e;--card:#13131a;--inp:#0f0f16;--hov:#16161f;--pill:#1e1e2e;--bor:#1e1e2e;--bor2:#1a1a24;--t1:#e2e8f0;--t2:#94a3b8;--t3:#64748b;--t4:#475569;--t5:#374151;--ac:#6366f1;--ac2:#8b5cf6;--acs:#a78bfa;--sh:rgba(99,102,241,0.15)}
+[data-theme=light]{--bg:#f1f5f9;--sb:#fff;--card:#fff;--inp:#f8fafc;--hov:#f0f4ff;--pill:#e8eaf6;--bor:#e2e8f0;--bor2:#edf2f7;--t1:#0f172a;--t2:#334155;--t3:#475569;--t4:#64748b;--t5:#94a3b8;--ac:#4f46e5;--ac2:#7c3aed;--acs:#6366f1;--sh:rgba(79,70,229,0.1)}
+body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t1);transition:background .3s,color .3s;min-height:100vh}
+input,select,textarea{font-family:inherit;background:var(--inp);border:1px solid var(--bor);border-radius:8px;padding:9px 12px;color:var(--t1);font-size:13px;outline:none;width:100%;transition:border-color .2s}
+input:focus,select:focus,textarea:focus{border-color:var(--ac)}
+input::placeholder,textarea::placeholder{color:var(--t5)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--bor);border-radius:2px}
+.card{background:var(--card);border:1px solid var(--bor);border-radius:12px;transition:background .3s,border-color .3s}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border:none;border-radius:10px;font-family:inherit;font-weight:600;font-size:13px;cursor:pointer;transition:opacity .15s,transform .1s}
+.btn:active{transform:scale(0.98)}.btn:disabled{opacity:.6;cursor:not-allowed}
+.btn-p{background:linear-gradient(135deg,var(--ac),var(--ac2));color:white}
+.btn-s{background:var(--pill);color:var(--t3);border:1px solid var(--bor)}
+.btn-d{background:transparent;color:#ef4444;border:1px solid var(--bor)}
+.sidebar{width:224px;background:var(--sb);border-right:1px solid var(--bor);position:fixed;top:0;bottom:0;left:0;display:flex;flex-direction:column;z-index:100;transition:background .3s,border-color .3s}
+.main{margin-left:224px;padding:0 28px 40px;min-height:100vh}
+.nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:8px;margin-bottom:2px;cursor:pointer;font-size:13px;color:var(--t3);transition:all .15s}
+.nav-item:hover,.nav-item.active{background:var(--pill);color:var(--acs)}
+.nav-item.active{font-weight:600}
+.toggle{width:40px;height:22px;background:var(--pill);border:1px solid var(--bor);border-radius:11px;cursor:pointer;position:relative;transition:background .3s;flex-shrink:0;outline:none}
+.toggle::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:var(--ac);transition:transform .3s}
+[data-theme=light] .toggle::after{transform:translateX(18px)}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px)}
+.modal{background:var(--card);border:1px solid var(--bor);border-radius:18px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3);transition:background .3s}
+.lbl{display:block;font-size:10px;color:var(--t3);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px}
+.stat-card{background:var(--card);border:1px solid var(--bor);border-radius:12px;padding:16px 18px;transition:background .3s,border-color .3s}
+table{width:100%;border-collapse:collapse}
+th{padding:11px 14px;text-align:left;font-size:10px;color:var(--t3);font-weight:600;text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--bor);background:var(--inp)}
+td{padding:12px 14px;border-bottom:1px solid var(--bor2);transition:background .1s}
+tr:hover td{background:var(--hov)}tr{cursor:pointer}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex-shrink:0}
+.filter-btn{padding:7px 11px;background:transparent;border:none;color:var(--t3);font-size:11px;cursor:pointer;font-family:inherit;transition:all .15s}
+.filter-btn.active{background:var(--pill);color:var(--acs);font-weight:600}
+.view-btn{padding:7px 13px;background:transparent;border:none;color:var(--t3);font-size:16px;cursor:pointer;font-family:inherit;transition:all .15s}
+.view-btn.active{background:var(--pill);color:var(--acs)}
+.tab-btn{flex:1;padding:8px;border-radius:7px;border:none;background:transparent;color:var(--t3);font-weight:400;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s}
+.tab-btn.active{background:var(--pill);color:var(--acs);font-weight:600}
+.semaforo{width:14px;height:14px;border-radius:50%;border:none;cursor:pointer;flex-shrink:0;display:block}
+.kanban-col{background:var(--card);border:1px solid var(--bor);border-radius:14px;overflow:hidden;transition:background .3s}
+.kanban-card{background:var(--inp);border:1px solid var(--bor);border-radius:10px;padding:12px;cursor:pointer;transition:border-color .15s;margin-bottom:8px}
+.kanban-card:hover{border-color:rgba(99,102,241,.5)}
+textarea{resize:vertical;min-height:70px}
+.cbox{background:var(--inp);border:1px solid var(--bor);border-radius:10px;padding:10px 14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+<!-- Botón de emergencia siempre visible -->
+<button id="emergency-btn" onclick="emergencyReset()" title="Restablecer sesión" style="position:fixed;bottom:16px;right:16px;z-index:9999;width:36px;height:36px;border-radius:50%;background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3);cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;opacity:0.4;transition:opacity .2s" onmouseover="this.style.opacity='1'" onmouseout="this.style.opacity='0.4'">🔄</button>
+
+<div id="auth-screen" style="display:flex;min-height:100vh;align-items:center;justify-content:center;padding:24px">
+  <button class="toggle" id="tgl-auth" style="position:fixed;top:20px;right:20px" title="Tema"></button>
+  <div style="width:100%;max-width:400px">
+    <div style="text-align:center;margin-bottom:32px">
       <img id="logo-auth" src="" alt="Weisz" style="height:56px;max-width:280px;object-fit:contain;margin:0 auto 16px;display:block"/>
       <p style="color:var(--t3);font-size:11px;letter-spacing:3px;text-transform:uppercase">Sistema CRM</p>
     </div>
@@ -163,6 +227,7 @@
     <div id="mt-info" style="padding:12px 24px;border-bottom:1px solid var(--bor);display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px;flex-shrink:0"></div>
     <div style="padding:8px 24px;border-bottom:1px solid var(--bor);display:flex;gap:8px;flex-shrink:0">
       <button class="btn btn-p" onclick="advTaskStatus()" style="flex:1;padding:8px">Avanzar estado &#x2192;</button>
+      <button id="mt-edit-btn" class="btn btn-s" onclick="openEditTask()" style="padding:8px 14px">✏️ Editar</button>
       <button class="btn btn-d" onclick="delCurTask()" style="padding:8px 14px">Eliminar</button>
     </div>
     <div style="padding:0 24px;border-bottom:1px solid var(--bor);flex-shrink:0;display:flex;gap:0">
@@ -201,6 +266,7 @@
       <button onclick="document.getElementById('m-newtask').style.display='none'" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:20px">&#x2715;</button>
     </div>
     <label class="lbl">Título *</label><input type="text" id="nt-title" placeholder="Nombre de la tarea" style="margin-bottom:14px"/>
+    <label class="lbl">Cliente</label><input type="text" id="nt-client" placeholder="Empresa o cliente relacionado" style="margin-bottom:14px"/>
     <label class="lbl">Descripción</label><input type="text" id="nt-desc" placeholder="Descripción breve" style="margin-bottom:14px"/>
     <label class="lbl">Fecha límite</label><input type="date" id="nt-date" style="margin-bottom:14px"/>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
@@ -580,8 +646,9 @@ function openTask(id){
   const desc=g("mt-desc");desc.textContent=curTask.description||"";desc.style.display=curTask.description?"block":"none";
   const proj=curTask.project,pe=g("mt-proj");
   if(proj){pe.textContent=proj.name;pe.style.color=proj.color;pe.style.background=proj.color+"22";pe.style.display="inline-flex";}else pe.style.display="none";
-  g("mt-info").innerHTML=[{l:"Responsable",v:curTask.assignee?.name||"Sin asignar"},{l:"Fecha límite",v:fd(curTask.deadline)},{l:"Estado",v:curTask.status,c:STC[curTask.status]},{l:"Prioridad",v:curTask.priority,c:PRC[curTask.priority]}]
-  .map(f=>`<div style="background:var(--inp);border:1px solid var(--bor);border-radius:9px;padding:11px 13px"><p style="margin:0 0 3px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">${f.l}</p><p style="margin:0;font-size:13px;font-weight:600;color:${f.c||"var(--t1)"}">${f.v}</p></div>`).join("");
+  const infoFields=[{l:"Responsable",v:curTask.assignee?.name||"Sin asignar"},{l:"Fecha límite",v:fd(curTask.deadline)},{l:"Estado",v:curTask.status,c:STC[curTask.status]},{l:"Prioridad",v:curTask.priority,c:PRC[curTask.priority]}];
+  if(curTask.client_name) infoFields.splice(1,0,{l:"Cliente",v:curTask.client_name});
+  g("mt-info").innerHTML=infoFields.map(f=>`<div style="background:var(--inp);border:1px solid var(--bor);border-radius:9px;padding:11px 13px"><p style="margin:0 0 3px;font-size:10px;color:var(--t3);text-transform:uppercase;letter-spacing:.5px">${f.l}</p><p style="margin:0;font-size:13px;font-weight:600;color:${f.c||"var(--t1)"}">${f.v}</p></div>`).join("");
   g("mt-txt").value="";pendTaskFile=null;g("mt-fprev").style.display="none";
   g("m-task").style.display="flex";
   // Aplicar permisos de rol
@@ -590,6 +657,9 @@ function openTask(id){
   const delBtn=document.querySelector('[onclick="delCurTask()"]');
   if(advBtn) advBtn.style.display=isLector?"none":"";
   if(delBtn) delBtn.style.display=isLector?"none":"";
+  // Show edit button
+  const editBtn=document.getElementById("mt-edit-btn");
+  if(editBtn) editBtn.style.display=isLector?"none":"inline-flex";
   loadTaskCmts(id);
 }
 
@@ -660,18 +730,23 @@ function prevTaskFile(input){
 async function addTaskCmt(){
   const txt=g("mt-txt").value.trim();
   if(!txt&&!pendTaskFile)return;
-  const btn=g("btn-tcmt");btn.textContent="...";btn.disabled=true;
-  const{data:c,error}=await db.from("task_comments").insert({task_id:curTask.id,user_id:CU.id,comment:txt||"Archivo adjunto"}).select().single();
-  if(!error&&c&&pendTaskFile){
-    const ext=pendTaskFile.name.split(".").pop(),path=`${curTask.id}/${c.id}.${ext}`;
-    const{error:ue}=await db.storage.from("task-files").upload(path,pendTaskFile);
-    if(!ue)await db.from("task_files").insert({task_id:curTask.id,filename:`${c.id}.${ext}`,original_name:pendTaskFile.name,size_bytes:pendTaskFile.size,mime_type:pendTaskFile.type,storage_path:path,uploaded_by:CU.id});
+  const btn=g("btn-tcmt");btn.innerHTML="...";btn.disabled=true;
+  try{
+    const{data:c,error}=await db.from("task_comments").insert({task_id:curTask.id,user_id:CU.id,comment:txt||"Archivo adjunto"}).select().single();
+    if(error)throw new Error(error.message);
+    if(c&&pendTaskFile){
+      const ext=pendTaskFile.name.split(".").pop(),path=`${curTask.id}/${c.id}.${ext}`;
+      const{error:ue}=await db.storage.from("task-files").upload(path,pendTaskFile);
+      if(!ue)await db.from("task_files").insert({task_id:curTask.id,filename:`${c.id}.${ext}`,original_name:pendTaskFile.name,size_bytes:pendTaskFile.size,mime_type:pendTaskFile.type,storage_path:path,uploaded_by:CU.id});
+    }
+    g("mt-txt").value="";pendTaskFile=null;g("mt-fprev").style.display="none";g("mt-file").value="";
+    await loadTaskCmts(curTask.id);
+  }catch(e){
+    alert("Error: "+e.message);
+  } finally {
+    btn.innerHTML="&#x2191;";btn.disabled=false;
   }
-  g("mt-txt").value="";pendTaskFile=null;g("mt-fprev").style.display="none";g("mt-file").value="";
-  btn.innerHTML="&#x2191;";btn.disabled=false;
-  await loadTaskCmts(curTask.id);
 }
-
 async function dlTaskFile(path,name){
   const{data}=await db.storage.from("task-files").download(path);
   if(data){const url=URL.createObjectURL(data),a=document.createElement("a");a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);}
@@ -682,7 +757,7 @@ async function delCurTask(){if(curTask&&confirm("¿Eliminar esta tarea?")){await
 async function delTask(id){await db.from("tasks").delete().eq("id",id);tasks=tasks.filter(t=>t.id!==id);renderTasks();renderTStats();}
 
 function openNewTask(){
-  ["nt-title","nt-desc"].forEach(id=>g(id).value="");
+  ["nt-title","nt-client","nt-desc"].forEach(id=>g(id).value="");
   g("nt-date").value="";g("nt-st").value="Pendiente";g("nt-pr").value="Media";
   g("m-newtask").style.display="flex";
 }
@@ -690,10 +765,33 @@ function openNewTask(){
 async function createTask(){
   const title=g("nt-title").value.trim();if(!title)return alert("El título es requerido");
   const btn=g("btn-ct");btn.textContent="Guardando...";btn.disabled=true;
-  const{error}=await db.from("tasks").insert({title,description:g("nt-desc").value||null,deadline:g("nt-date").value||null,assignee_id:g("nt-ass").value||null,project_id:g("nt-proj").value||null,status:g("nt-st").value,priority:g("nt-pr").value,created_by:CU.id});
-  btn.textContent="Crear tarea";btn.disabled=false;
-  if(error){alert("Error: "+error.message);return;}
-  g("m-newtask").style.display="none";await fetchAll();
+  try{
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),10000);
+    const{error}=await db.from("tasks").insert({
+      title,
+      client_name:g("nt-client").value||null,
+      description:g("nt-desc").value||null,
+      deadline:g("nt-date").value||null,
+      assignee_id:g("nt-ass").value||null,
+      project_id:g("nt-proj").value||null,
+      status:g("nt-st").value,
+      priority:g("nt-pr").value,
+      created_by:CU.id
+    });
+    clearTimeout(timeout);
+    if(error){alert("Error al guardar: "+error.message);return;}
+    g("m-newtask").style.display="none";
+    await fetchAll();
+  }catch(e){
+    if(e.name==="AbortError"){
+      alert("Tiempo de espera agotado. Verifica tu conexión e intenta de nuevo.");
+    } else {
+      alert("Error inesperado: "+e.message);
+    }
+  } finally {
+    btn.textContent="Crear tarea";btn.disabled=false;
+  }
 }
 
 function renderOStats(){
@@ -818,16 +916,22 @@ function prevFile(input){
 
 async function addCmt(){
   const txt=g("mo-txt").value.trim();if(!txt&&!pendFile)return;
-  const btn=g("btn-cmt");btn.textContent="...";btn.disabled=true;
-  const{data:c,error}=await db.from("opportunity_comments").insert({opportunity_id:curOpp.id,user_id:CU.id,comment:txt||"Archivo adjunto"}).select().single();
-  if(!error&&c&&pendFile){
-    const ext=pendFile.name.split(".").pop(),path=`${curOpp.id}/${c.id}.${ext}`;
-    const{error:ue}=await db.storage.from("opportunity-files").upload(path,pendFile);
-    if(!ue)await db.from("opportunity_files").insert({opportunity_id:curOpp.id,filename:`${c.id}.${ext}`,original_name:pendFile.name,size_bytes:pendFile.size,mime_type:pendFile.type,storage_path:path,uploaded_by:CU.id});
+  const btn=g("btn-cmt");btn.innerHTML="...";btn.disabled=true;
+  try{
+    const{data:c,error}=await db.from("opportunity_comments").insert({opportunity_id:curOpp.id,user_id:CU.id,comment:txt||"Archivo adjunto"}).select().single();
+    if(error)throw new Error(error.message);
+    if(c&&pendFile){
+      const ext=pendFile.name.split(".").pop(),path=`${curOpp.id}/${c.id}.${ext}`;
+      const{error:ue}=await db.storage.from("opportunity-files").upload(path,pendFile);
+      if(!ue)await db.from("opportunity_files").insert({opportunity_id:curOpp.id,filename:`${c.id}.${ext}`,original_name:pendFile.name,size_bytes:pendFile.size,mime_type:pendFile.type,storage_path:path,uploaded_by:CU.id});
+    }
+    g("mo-txt").value="";pendFile=null;g("mo-fprev").style.display="none";g("mo-file").value="";
+    await loadCmts(curOpp.id);
+  }catch(e){
+    alert("Error al guardar comentario: "+e.message);
+  } finally {
+    btn.innerHTML="&#x2191;";btn.disabled=false;
   }
-  g("mo-txt").value="";pendFile=null;g("mo-fprev").style.display="none";g("mo-file").value="";
-  btn.innerHTML="&#x2191;";btn.disabled=false;
-  await loadCmts(curOpp.id);
 }
 
 async function dlFile(path,name){
@@ -1244,6 +1348,51 @@ async function confirmarBulkPerdida(){
   renderOpps();renderOStats();
 }
 
+
+function openEditTask(){
+  if(!curTask) return;
+  g("et-title").value = curTask.title||"";
+  g("et-client").value = curTask.client_name||"";
+  g("et-desc").value = curTask.description||"";
+  g("et-date").value = curTask.deadline||"";
+  g("et-st").value = curTask.status||"Pendiente";
+  g("et-pr").value = curTask.priority||"Media";
+  // Populate selects
+  const uo=`<option value="">Sin asignar</option>`+users.map(u=>`<option value="${u.id}"${u.id===curTask.assignee_id?" selected":""}>${u.name}</option>`).join("");
+  const po=`<option value="">Sin proyecto</option>`+projects.map(p=>`<option value="${p.id}"${p.id===curTask.project_id?" selected":""}>${p.name}</option>`).join("");
+  g("et-ass").innerHTML=uo;
+  g("et-proj").innerHTML=po;
+  g("m-edittask").style.display="flex";
+}
+
+async function saveEditTask(){
+  const title=g("et-title").value.trim();
+  if(!title){alert("El título es requerido");return;}
+  const btn=g("btn-et");btn.textContent="Guardando...";btn.disabled=true;
+  try{
+    const{error}=await db.from("tasks").update({
+      title,
+      client_name: g("et-client").value||null,
+      description: g("et-desc").value||null,
+      deadline:    g("et-date").value||null,
+      assignee_id: g("et-ass").value||null,
+      project_id:  g("et-proj").value||null,
+      status:      g("et-st").value,
+      priority:    g("et-pr").value,
+      updated_at:  new Date().toISOString()
+    }).eq("id",curTask.id);
+    if(error)throw new Error(error.message);
+    g("m-edittask").style.display="none";
+    await fetchAll();
+    // Reopen task modal with updated data
+    const updated=tasks.find(t=>t.id===curTask.id);
+    if(updated) openTask(updated.id);
+  }catch(e){
+    alert("Error al guardar: "+e.message);
+  } finally {
+    btn.textContent="Guardar cambios";btn.disabled=false;
+  }
+}
 function switchModule(m){
   g("mod-tareas").style.display=m==="tareas"?"block":"none";
   g("mod-oportunidades").style.display=m==="oportunidades"?"block":"none";
@@ -1325,6 +1474,30 @@ function switchModule(m){
     </div>
     <input type="hidden" id="np-color" value="#8b5cf6"/>
     <button class="btn btn-p" id="btn-np" onclick="createProject()" style="width:100%;padding:12px;font-size:14px">Crear proyecto</button>
+  </div>
+</div>
+<!-- MODAL EDITAR TAREA -->
+<div id="m-edittask" class="modal-bg" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" style="max-width:460px;padding:26px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="font-size:17px;font-weight:700;color:var(--t1)">Editar tarea</h2>
+      <button onclick="document.getElementById('m-edittask').style.display='none'" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:20px">&#x2715;</button>
+    </div>
+    <label class="lbl">Título *</label>
+    <input type="text" id="et-title" placeholder="Nombre de la tarea" style="margin-bottom:14px"/>
+    <label class="lbl">Cliente</label>
+    <input type="text" id="et-client" placeholder="Empresa o cliente relacionado" style="margin-bottom:14px"/>
+    <label class="lbl">Descripción</label>
+    <input type="text" id="et-desc" placeholder="Descripción breve" style="margin-bottom:14px"/>
+    <label class="lbl">Fecha límite</label>
+    <input type="date" id="et-date" style="margin-bottom:14px"/>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div><label class="lbl">Responsable</label><select id="et-ass"></select></div>
+      <div><label class="lbl">Proyecto</label><select id="et-proj"></select></div>
+      <div><label class="lbl">Estado</label><select id="et-st"><option>Pendiente</option><option>En progreso</option><option>Completado</option></select></div>
+      <div><label class="lbl">Prioridad</label><select id="et-pr"><option>Alta</option><option>Media</option><option>Baja</option></select></div>
+    </div>
+    <button class="btn btn-p" id="btn-et" onclick="saveEditTask()" style="width:100%;padding:12px;font-size:14px">Guardar cambios</button>
   </div>
 </div>
 </body>
