@@ -1423,7 +1423,7 @@ async function saveEditTask(){
 let contacts = [];
 
 async function loadContacts(){
-  const{data}=await db.from("clients").select("*").order("company").order("name");
+  const{data}=await db.from("clients").select("*").order("name",{ascending:true});
   contacts = data||[];
   const sub=document.getElementById("contacts-subtitle");
   if(sub) sub.textContent=`${contacts.length} contactos sincronizados`;
