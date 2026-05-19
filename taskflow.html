@@ -550,6 +550,36 @@ async function fetchAll(){
   tasks=t.data||[];projects=p.data||[];users=u.data||[];opps=o.data||[];
   renderProj();renderTasks();renderTStats();renderOpps();renderOStats();populateSel();
   applyRolePermissions();
+  autoAdvanceOpps();
+}
+
+async function autoAdvanceOpps(){
+  const today = new Date().toISOString().split('T')[0];
+  // Find En espera with past next_follow_date
+  const vencidas = opps.filter(o=>
+    o.stage === "En espera" &&
+    o.next_follow_date &&
+    o.next_follow_date <= today
+  );
+  if(!vencidas.length) return;
+  console.log(`Auto-avanzando ${vencidas.length} oportunidades vencidas...`);
+  for(const o of vencidas){
+    try{
+      await db.from("opportunities").update({
+        stage:"Hacer seguimiento",
+        status:"amarillo",
+        updated_at: new Date().toISOString()
+      }).eq("id", o.id);
+      o.stage="Hacer seguimiento";
+      o.status="amarillo";
+    }catch(e){
+      console.error("Error auto-avanzando",o.code,e);
+    }
+  }
+  // Re-render if any changed
+  renderOpps();
+  renderOStats();
+  console.log("✅ Auto-avance completado");
 }
 
 let CU_ROLE = "usuario";
