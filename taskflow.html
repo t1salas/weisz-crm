@@ -90,6 +90,7 @@ textarea{resize:vertical;min-height:70px}
     <nav style="padding:12px 10px;flex:1;overflow-y:auto">
       <div class="nav-item active" id="nav-t" onclick="switchModule('tareas')">✓ Tareas</div>
       <div class="nav-item" id="nav-o" onclick="switchModule('oportunidades')">📋 Oportunidades</div>
+      <div class="nav-item" id="nav-c" onclick="switchModule('contactos')">👥 Contactos</div>
       <div class="nav-item" id="nav-admin" onclick="switchModule('admin')" style="display:none">⚙️ Administración</div>
       <div style="margin-top:20px;padding:0 4px">
         <p style="font-size:10px;color:var(--t5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding:0 8px">Proyectos</p>
@@ -168,6 +169,26 @@ textarea{resize:vertical;min-height:70px}
         <button class="btn btn-p" onclick="bulkSeguimiento()" style="font-size:12px;padding:8px 16px">📞 Reportar seguimiento</button>
         <button class="btn" onclick="bulkPerdida()" style="font-size:12px;padding:8px 16px;background:#fee2e2;color:#ef4444;border:1px solid #fca5a5">❌ Marcar perdidas</button>
         <button class="btn btn-s" onclick="clearOppSelection()" style="font-size:12px;padding:8px 12px">✕</button>
+      </div>
+    </div>
+
+    <!-- MÓDULO CONTACTOS -->
+    <div id="mod-contactos" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:22px 0 18px;border-bottom:1px solid var(--bor);margin-bottom:24px">
+        <div>
+          <h1 style="font-size:20px;font-weight:700;letter-spacing:-.5px;margin-bottom:3px">Contactos</h1>
+          <p id="contacts-subtitle" style="color:var(--t3);font-size:12px">Directorio de clientes y contactos</p>
+        </div>
+        <div style="position:relative;max-width:320px;width:100%">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:13px">🔍</span>
+          <input type="text" id="contacts-search" placeholder="Buscar por nombre, empresa, email..." style="padding-left:32px" oninput="renderContacts()"/>
+        </div>
+      </div>
+      <div class="card" style="border-radius:14px;overflow:hidden">
+        <table>
+          <thead><tr><th>Nombre</th><th>Cargo</th><th>Empresa</th><th>Teléfono</th><th>Email</th></tr></thead>
+          <tbody id="contacts-tbody"><tr><td colspan="5" style="padding:48px;text-align:center;color:var(--t5)">Cargando contactos...</td></tr></tbody>
+        </table>
       </div>
     </div>
 
@@ -266,7 +287,11 @@ textarea{resize:vertical;min-height:70px}
       <button onclick="document.getElementById('m-newtask').style.display='none'" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:20px">&#x2715;</button>
     </div>
     <label class="lbl">Título *</label><input type="text" id="nt-title" placeholder="Nombre de la tarea" style="margin-bottom:14px"/>
-    <label class="lbl">Cliente</label><input type="text" id="nt-client" placeholder="Empresa o cliente relacionado" style="margin-bottom:14px"/>
+    <label class="lbl">Cliente</label>
+    <div style="position:relative;margin-bottom:14px">
+      <input type="text" id="nt-client" placeholder="Escribe para buscar cliente..." autocomplete="off" oninput="filterClients('nt-client','nt-client-list')"/>
+      <div id="nt-client-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--bor);border-radius:8px;max-height:180px;overflow-y:auto;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,.15)"></div>
+    </div>
     <label class="lbl">Descripción</label><input type="text" id="nt-desc" placeholder="Descripción breve" style="margin-bottom:14px"/>
     <label class="lbl">Fecha límite</label><input type="date" id="nt-date" style="margin-bottom:14px"/>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
@@ -1393,15 +1418,93 @@ async function saveEditTask(){
     btn.textContent="Guardar cambios";btn.disabled=false;
   }
 }
+
+// ── CONTACTOS ─────────────────────────────────────────────
+let contacts = [];
+
+async function loadContacts(){
+  const{data}=await db.from("clients").select("*").order("company").order("name");
+  contacts = data||[];
+  const sub=document.getElementById("contacts-subtitle");
+  if(sub) sub.textContent=`${contacts.length} contactos sincronizados`;
+  renderContacts();
+}
+
+function renderContacts(){
+  const srch=(document.getElementById("contacts-search")?.value||"").toLowerCase();
+  const f=contacts.filter(c=>
+    !srch||
+    c.name?.toLowerCase().includes(srch)||
+    c.company?.toLowerCase().includes(srch)||
+    c.email?.toLowerCase().includes(srch)||
+    c.phone?.toLowerCase().includes(srch)
+  );
+  const tb=document.getElementById("contacts-tbody");
+  if(!tb)return;
+  if(!f.length){
+    tb.innerHTML=`<tr><td colspan="5" style="padding:48px;text-align:center;color:var(--t5)">${contacts.length===0?"Sin contactos sincronizados aún.":"Sin resultados."}</td></tr>`;
+    return;
+  }
+  tb.innerHTML=f.map(c=>`<tr>
+    <td><p style="margin:0;font-weight:600;font-size:13px;color:var(--t1)">${c.name||"—"}</p></td>
+    <td style="font-size:12px;color:var(--t3)">${c.job_title||"—"}</td>
+    <td><span style="font-size:12px;font-weight:600;color:var(--t2)">${c.company||"—"}</span></td>
+    <td style="font-size:12px;color:var(--t3);font-family:'DM Mono',monospace">${c.phone||"—"}</td>
+    <td style="font-size:12px;color:var(--t3)">${c.email?`<a href="mailto:${c.email}" style="color:var(--acs);text-decoration:none">${c.email}</a>`:"—"}</td>
+  </tr>`).join("");
+}
+
+// ── AUTOCOMPLETE CLIENTES ──────────────────────────────────
+function filterClients(inputId, listId){
+  const input=document.getElementById(inputId);
+  const list=document.getElementById(listId);
+  if(!input||!list)return;
+  const val=input.value.toLowerCase().trim();
+  if(!val||val.length<2){list.style.display="none";return;}
+
+  // Build unique company list from contacts + opps
+  const companies=new Set();
+  contacts.forEach(c=>{if(c.company)companies.add(c.company);});
+  opps.forEach(o=>{if(o.client_name)companies.add(o.client_name);});
+
+  const matches=[...companies].filter(c=>c.toLowerCase().includes(val)).slice(0,8);
+
+  if(!matches.length){list.style.display="none";return;}
+
+  list.innerHTML=matches.map(m=>`<div onclick="selectClient('${inputId}','${listId}','${m.replace(/'/g,"\'")}')" style="padding:10px 14px;cursor:pointer;font-size:13px;color:var(--t1);border-bottom:1px solid var(--bor2)" onmouseover="this.style.background='var(--hov)'" onmouseout="this.style.background=''">
+    <span style="font-weight:600">${m}</span>
+  </div>`).join("");
+  list.style.display="block";
+}
+
+function selectClient(inputId, listId, value){
+  const input=document.getElementById(inputId);
+  const list=document.getElementById(listId);
+  if(input) input.value=value;
+  if(list) list.style.display="none";
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener("click",e=>{
+  ["nt-client-list","et-client-list"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&!el.contains(e.target)&&e.target.id!==id.replace("-list",""))
+      el.style.display="none";
+  });
+});
+
 function switchModule(m){
   g("mod-tareas").style.display=m==="tareas"?"block":"none";
   g("mod-oportunidades").style.display=m==="oportunidades"?"block":"none";
-  if(m!=="oportunidades") clearOppSelection();
   g("mod-admin").style.display=m==="admin"?"block":"none";
+  g("mod-contactos").style.display=m==="contactos"?"block":"none";
   g("nav-t").classList.toggle("active",m==="tareas");
   g("nav-o").classList.toggle("active",m==="oportunidades");
+  g("nav-c").classList.toggle("active",m==="contactos");
   const na=document.getElementById("nav-admin");if(na)na.classList.toggle("active",m==="admin");
+  if(m!=="oportunidades") clearOppSelection();
   if(m==="admin") switchAdminTab("usuarios");
+  if(m==="contactos") loadContacts();
 }
 </script>
 
@@ -1486,7 +1589,10 @@ function switchModule(m){
     <label class="lbl">Título *</label>
     <input type="text" id="et-title" placeholder="Nombre de la tarea" style="margin-bottom:14px"/>
     <label class="lbl">Cliente</label>
-    <input type="text" id="et-client" placeholder="Empresa o cliente relacionado" style="margin-bottom:14px"/>
+    <div style="position:relative;margin-bottom:14px">
+      <input type="text" id="et-client" placeholder="Escribe para buscar cliente..." autocomplete="off" oninput="filterClients('et-client','et-client-list')"/>
+      <div id="et-client-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--bor);border-radius:8px;max-height:180px;overflow-y:auto;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,.15)"></div>
+    </div>
     <label class="lbl">Descripción</label>
     <input type="text" id="et-desc" placeholder="Descripción breve" style="margin-bottom:14px"/>
     <label class="lbl">Fecha límite</label>
