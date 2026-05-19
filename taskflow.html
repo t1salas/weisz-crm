@@ -402,7 +402,7 @@ const PRC={"Alta":"#ef4444","Media":"#f97316","Baja":"#6b7280"};
 const PRB={"Alta":"rgba(239,68,68,.12)","Media":"rgba(249,115,22,.12)","Baja":"rgba(107,114,128,.12)"};
 const SGC={"Oferta reciente":"#06b6d4","Hacer seguimiento":"#f59e0b","En espera":"#3b82f6","Perdida":"#ef4444"};
 const SGB={"Oferta reciente":"rgba(6,182,212,.12)","Hacer seguimiento":"rgba(245,158,11,.12)","En espera":"rgba(59,130,246,.12)","Perdida":"rgba(239,68,68,.12)"};
-const SMC={"verde":"#10b981","amarillo":"#f59e0b","rojo":"#ef4444"};
+const SMC={"verde":"#10b981","amarillo":"#f59e0b","rojo":"#ef4444","azul":"#3b82f6"};
 
 function applyTheme(){
   document.documentElement.setAttribute("data-theme",theme);
@@ -876,7 +876,7 @@ function renderOpps(){
 }
 
 async function cyclOppStById(id,cur){
-  const ord=["verde","amarillo","rojo"],nxt=ord[(ord.indexOf(cur)+1)%3];
+  const ord=["verde","amarillo","azul","rojo"],nxt=ord[(ord.indexOf(cur)+1)%3];
   await db.from("opportunities").update({status:nxt}).eq("id",id);
   const o=opps.find(x=>x.id===id);if(o)o.status=nxt;
   if(curOpp?.id===id){curOpp.status=nxt;g("mo-sem").style.background=SMC[nxt];}
@@ -1105,7 +1105,7 @@ async function confirmarSeguimiento(){
     // Actualizar etapa, estado y fecha próximo seguimiento
     const updateData = {
       stage: newStage,
-      status: newStage === "Perdida" ? "rojo" : newStage === "En espera" ? "amarillo" : "amarillo",
+      status: newStage === "Perdida" ? "rojo" : newStage === "En espera" ? "azul" : "amarillo",
       follow_count: newFollowCount,
       updated_at: new Date().toISOString()
     };
@@ -1355,7 +1355,7 @@ async function confirmarBulkSeguimiento(){
 📅 Próximo contacto: ${fechaStr}`;
       await db.from("opportunity_comments").insert({opportunity_id:id,user_id:CU.id,comment:fullComment});
       await db.from("opportunities").update({
-        stage:"En espera",status:"amarillo",
+        stage:"En espera",status:"azul",
         follow_count:fc,next_follow_date:fecha,
         updated_at:new Date().toISOString()
       }).eq("id",id);
