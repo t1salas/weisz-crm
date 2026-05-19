@@ -1421,7 +1421,7 @@ async function renderAdminUsers(){
     <td><span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;background:${u.active?"rgba(16,185,129,.12)":"rgba(239,68,68,.12)"};color:${u.active?"#10b981":"#ef4444"}">${u.active?"Activo":"Inactivo"}</span></td>
     <td style="display:flex;gap:6px">
       <button onclick="toggleUserRole('${u.id}','${u.role||"usuario"}')" class="btn btn-s" style="font-size:11px;padding:5px 10px">Cambiar rol</button>
-      <button onclick="editTeamsEmail('${u.id}','${u.teams_email||""}','${u.name}')" class="btn btn-s" style="font-size:11px;padding:5px 10px">📧 Teams</button>
+      <button onclick="editTeamsEmail('${u.id}')" class="btn btn-s" style="font-size:11px;padding:5px 10px">📧 Teams</button>
       <button onclick="toggleUserActive('${u.id}',${u.active})" class="btn btn-s" style="font-size:11px;padding:5px 10px">${u.active?"Desactivar":"Activar"}</button>
     </td>
   </tr>`).join("");
@@ -1440,10 +1440,16 @@ async function toggleUserActive(userId, current){
   await fetchAll();
 }
 
-async function editTeamsEmail(userId, currentEmail, userName){
-  const nuevoEmail = prompt(`Email Teams de ${userName}:\n(ej: nombre@weiszinstrumentos.onmicrosoft.com)`, currentEmail||"");
+async function editTeamsEmail(userId){
+  // Buscar usuario actual en Supabase para tener datos frescos
+  const{data:u} = await db.from("users").select("name,teams_email").eq("id",userId).single();
+  const userName = u?.name || "usuario";
+  const currentEmail = u?.teams_email || "";
+  const nuevoEmail = prompt("Email Teams de " + userName + ":\n(ej: nombre@weiszinstrumentos.onmicrosoft.com)", currentEmail);
   if(nuevoEmail === null) return; // canceló
-  await db.from("users").update({teams_email: nuevoEmail.trim()||null}).eq("id",userId);
+  const{error} = await db.from("users").update({teams_email: nuevoEmail.trim()||null}).eq("id",userId);
+  if(error){ alert("Error al guardar: "+error.message); return; }
+  alert("✅ Email Teams actualizado");
   renderAdminUsers();
 }
 
