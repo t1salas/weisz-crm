@@ -1435,6 +1435,7 @@ function renderContacts(){
   const f=contacts.filter(c=>
     !srch||
     c.name?.toLowerCase().includes(srch)||
+    c.contact?.toLowerCase().includes(srch)||
     c.company?.toLowerCase().includes(srch)||
     c.email?.toLowerCase().includes(srch)||
     c.phone?.toLowerCase().includes(srch)
@@ -1446,9 +1447,9 @@ function renderContacts(){
     return;
   }
   tb.innerHTML=f.map(c=>`<tr>
-    <td><p style="margin:0;font-weight:600;font-size:13px;color:var(--t1)">${c.name||"—"}</p></td>
+    <td><p style="margin:0;font-weight:600;font-size:13px;color:var(--t1)">${c.contact||c.name||"—"}</p></td>
     <td style="font-size:12px;color:var(--t3)">${c.job_title||"—"}</td>
-    <td><span style="font-size:12px;font-weight:600;color:var(--t2)">${c.company||"—"}</span></td>
+    <td><span style="font-size:12px;font-weight:600;color:var(--t2)">${c.name||c.company||"—"}</span></td>
     <td style="font-size:12px;color:var(--t3);font-family:'DM Mono',monospace">${c.phone||"—"}</td>
     <td style="font-size:12px;color:var(--t3)">${c.email?`<a href="mailto:${c.email}" style="color:var(--acs);text-decoration:none">${c.email}</a>`:"—"}</td>
   </tr>`).join("");
@@ -1464,7 +1465,7 @@ function filterClients(inputId, listId){
 
   // Build unique company list from contacts + opps
   const companies=new Set();
-  contacts.forEach(c=>{if(c.company)companies.add(c.company);});
+  contacts.forEach(c=>{if(c.name)companies.add(c.name);});
   opps.forEach(o=>{if(o.client_name)companies.add(o.client_name);});
 
   const matches=[...companies].filter(c=>c.toLowerCase().includes(val)).slice(0,8);
