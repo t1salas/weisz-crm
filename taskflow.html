@@ -311,9 +311,9 @@ textarea{resize:vertical;min-height:70px}
       <div style="display:flex;align-items:flex-start;justify-content:space-between">
         <div style="flex:1">
           <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
-            <button id="mo-sem" class="semaforo" onclick="cyclOppSt()" title="Cambiar estado"></button>
+            <span id="mo-sem" class="semaforo" style="cursor:default"></span>
             <h2 id="mo-client" style="font-size:18px;font-weight:700;color:var(--t1)"></h2>
-            <button id="mo-stage" class="badge" onclick="cyclOppStg()" style="cursor:pointer;border:none"></button>
+           <span id="mo-stage" class="badge" style="border:none"></span> 
           </div>
           <p id="mo-name" style="font-size:13px;color:var(--t2);margin-bottom:4px;display:none"></p>
           <p id="mo-subj" style="font-size:12px;color:var(--t3);display:none"></p>
@@ -864,13 +864,13 @@ function renderOpps(){
   if(!f.length){tb.innerHTML=`<tr><td colspan="8" style="padding:48px;text-align:center;color:var(--t5)">${opps.length===0?"No hay oportunidades aún.":"Sin resultados."}</td></tr>`;return;}
   tb.innerHTML=f.map(o=>`<tr onclick="openOpp('${o.id}')">
     <td onclick="event.stopPropagation()" style="text-align:center"><input type="checkbox" class="opp-chk" data-id="${o.id}" onchange="updateOppSelection()" style="width:16px;height:16px;cursor:pointer"/></td>
-    <td><button onclick="event.stopPropagation();cyclOppStById('${o.id}','${o.status}')" class="semaforo" style="background:${SMC[o.status]}" title="${o.status}"></button></td>
+    <td><button class="semaforo" style="background:${SMC[o.status]};cursor:default" style="background:${SMC[o.status]}" title="${o.status}"></button></td>
     <td><p style="margin:0;font-weight:700;font-size:13px;color:var(--t1)">${o.client_name||"—"}</p></td>
     <td><p style="margin:0;font-size:12px;color:var(--t2)">${o.name||"<span style='color:var(--t5)'>Sin nombre</span>"}</p></td>
     <td style="max-width:220px"><p style="margin:0;font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.email_subject||"—"}</p></td>
     <td>${o.assignee?`<div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:${avc(o.assignee.name)};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;flex-shrink:0">${ini(o.assignee.name)}</div><span style="font-size:11px;color:var(--t2)">${o.assignee.name.split(" ")[0]}</span></div>`:`<span style="color:var(--t5);font-size:11px">—</span>`}</td>
     <td style="max-width:180px"><p style="margin:0;font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.quick_note||"—"}</p></td>
-    <td><button onclick="event.stopPropagation();cyclOppStgById('${o.id}','${o.stage}')" style="display:flex;align-items:center;gap:5px;background:${SGB[o.stage]};border:1px solid ${SGC[o.stage]}44;border-radius:6px;padding:4px 10px;cursor:pointer;font-family:inherit;white-space:nowrap"><span class="dot" style="background:${SGC[o.stage]};width:6px;height:6px"></span><span style="font-size:11px;font-weight:600;color:${SGC[o.stage]}">${o.stage}</span></button></td>
+    <td><span style="display:flex;align-items:center;gap:5px;background:${SGB[o.stage]};border:1px solid ${SGC[o.stage]}44;border-radius:6px;padding:4px 10px;white-space:nowrap;width:fit-content"> 
     <td style="font-size:11px;color:var(--t3);font-family:'DM Mono',monospace;white-space:nowrap">${fd(o.sent_date)}</td>
   </tr>`).join("");
 }
