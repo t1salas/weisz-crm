@@ -208,7 +208,7 @@ textarea{resize:vertical;min-height:70px}
       <!-- Panel usuarios -->
       <div id="ap-usuarios">
         <div class="card" style="border-radius:14px;overflow:hidden">
-          <table><thead><tr><th>Usuario</th><th>Email</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
+          <table><thead><tr><th>Usuario</th><th>Email CRM</th><th>Email Teams</th><th>Rol</th><th>Estado</th><th></th></tr></thead>
           <tbody id="admin-users-tbody"></tbody></table>
         </div>
       </div>
@@ -553,6 +553,248 @@ async function fetchAll(){
   autoAdvanceOpps();
 }
 
+
+// ══════════════════════════════════════════════════════════════════
+// INTEGRACIÓN MICROSOFT GRAPH API — Teams + Email
+// ══════════════════════════════════════════════════════════════════
+const MS_CLIENT_ID     = "205c318c-e42f-4aa0-9954-3c6c58417aba";
+const MS_TENANT_ID     = "c17f734b-6bcc-4d5b-864f-94577a0576d6";
+const MS_CLIENT_SECRET = "-cj8Q~R2XkoWRMlGIu.rB7.JUX6eyB8iiMWmhbNX";
+const MS_SCOPE         = "https://graph.microsoft.com/.default";
+const CORREO_SEGUIMIENTO = "oscar.gonzalez@weisz.com";
+const MAILBOX_REMITENTE  = "oscar.gonzalez@weiszinstrumentos.onmicrosoft.com";
+
+let _msToken = null;
+let _msTokenExp = 0;
+
+async function getMSToken(){
+  if(_msToken && Date.now() < _msTokenExp) return _msToken;
+  try{
+    const resp = await fetch(`https://login.microsoftonline.com/${MS_TENANT_ID}/oauth2/v2.0/token`,{
+      method:"POST",
+      headers:{"Content-Type":"application/x-www-form-urlencoded"},
+      body:new URLSearchParams({
+        grant_type:"client_credentials",
+        client_id:MS_CLIENT_ID,
+        client_secret:MS_CLIENT_SECRET,
+        scope:MS_SCOPE
+      })
+    });
+    const data = await resp.json();
+    if(!data.access_token) throw new Error(data.error_description||"No token");
+    _msToken = data.access_token;
+    _msTokenExp = Date.now() + (data.expires_in - 60)*1000;
+    return _msToken;
+  }catch(e){
+    console.error("getMSToken error:",e.message);
+    return null;
+  }
+}
+
+async function getTeamsUserId(email){
+  try{
+    const token = await getMSToken();
+    if(!token) return null;
+    // Buscar teams_email configurado en el usuario del CRM
+    const userRecord = users.find(u => u.email === email || u.teams_email === email);
+    const teamsEmail = userRecord?.teams_email || email.replace(/@weisz\.com$/i, "@weiszinstrumentos.onmicrosoft.com");
+    const resp = await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(teamsEmail)}`,{
+      headers:{"Authorization":"Bearer "+token}
+    });
+    const data = await resp.json();
+    return data.id || null;
+  }catch(e){
+    console.error("getTeamsUserId error:",e.message);
+    return null;
+  }
+}
+
+async function sendTeamsMessage(toEmail, message){
+  try{
+    const token = await getMSToken();
+    if(!token){ console.warn("Teams: sin token"); return false; }
+
+    // Obtener IDs de ambos usuarios
+    const [toId, fromId] = await Promise.all([
+      getTeamsUserId(toEmail),
+      getTeamsUserId(CU.email)
+    ]);
+    if(!toId){ console.warn("Teams: usuario destino no encontrado:",toEmail); return false; }
+
+    // Usar el bot app como remitente si el from no existe
+    const members = [];
+    const seen = new Set();
+    for(const uid of [toId, fromId].filter(Boolean)){
+      if(!seen.has(uid)){
+        seen.add(uid);
+        members.push({"@odata.type":"#microsoft.graph.aadUserConversationMember","roles":["owner"],"user@odata.bind":`https://graph.microsoft.com/v1.0/users('${uid}')`});
+      }
+    }
+
+    // Crear chat
+    const chatResp = await fetch("https://graph.microsoft.com/v1.0/chats",{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify({chatType:"oneOnOne",members})
+    });
+    const chatData = await chatResp.json();
+    const chatId = chatData.id;
+    if(!chatId){ console.warn("Teams: no se pudo crear chat",chatData); return false; }
+
+    // Enviar mensaje
+    const msgResp = await fetch(`https://graph.microsoft.com/v1.0/chats/${chatId}/messages`,{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify({body:{contentType:"html",content:message}})
+    });
+    const msgData = await msgResp.json();
+    return !!msgData.id;
+  }catch(e){
+    console.error("sendTeamsMessage error:",e.message);
+    return false;
+  }
+}
+
+async function sendEmailGraph(toEmail, subject, htmlBody){
+  try{
+    const token = await getMSToken();
+    if(!token){ console.warn("Email: sin token"); return false; }
+
+    // Enviar desde la cuenta del usuario actual usando /me — requiere delegated
+    // Con client_credentials usamos un mailbox fijo: oscar.gonzalez@weisz.com como from
+    const resp = await fetch(`https://graph.microsoft.com/v1.0/users/${encodeURIComponent(MAILBOX_REMITENTE)}/sendMail`,{
+      method:"POST",
+      headers:{"Authorization":"Bearer "+token,"Content-Type":"application/json"},
+      body:JSON.stringify({
+        message:{
+          subject,
+          body:{contentType:"HTML",content:htmlBody},
+          toRecipients:[{emailAddress:{address:toEmail}}]
+        },
+        saveToSentItems:true
+      })
+    });
+    return resp.status === 202;
+  }catch(e){
+    console.error("sendEmailGraph error:",e.message);
+    return false;
+  }
+}
+
+// ── NOTIFICACIÓN TEAMS AL ASIGNAR TAREA ───────────────────────────
+async function notificarTareaTeams(assigneeId, taskTitle, clientName, deadline, createdBy){
+  try{
+    const assignee = users.find(u=>u.id===assigneeId);
+    if(!assignee?.email) return;
+    // No notificar si se asigna a sí mismo
+    if(assignee.id === CU.id) return;
+
+    const creador = users.find(u=>u.id===createdBy)||{name:"Un colaborador"};
+    const fechaStr = deadline ? new Date(deadline+"T12:00:00").toLocaleDateString("es-CO",{day:"2-digit",month:"long",year:"numeric"}) : "Sin fecha límite";
+    const clienteStr = clientName ? `<br><b>Cliente:</b> ${clientName}` : "";
+
+    const msg = `<b>📋 Nueva tarea asignada</b><br>`+
+      `<b>Tarea:</b> ${taskTitle}${clienteStr}<br>`+
+      `<b>Fecha límite:</b> ${fechaStr}<br>`+
+      `<b>Asignada por:</b> ${creador.name}<br><br>`+
+      `<i>Ingresa al CRM para ver los detalles.</i>`;
+
+    const ok = await sendTeamsMessage(assignee.email, msg);
+    console.log(ok ? `✅ Teams notificado: ${assignee.email}` : `⚠️ Teams no enviado a ${assignee.email}`);
+  }catch(e){
+    console.error("notificarTareaTeams:",e.message);
+  }
+}
+
+// ── CORREO MARTES: LISTADO SEGUIMIENTOS ───────────────────────────
+const LUNES_KEY = "wcrm_correo_seguimiento_ultimo";
+
+async function checkEnviarCorreoMartes(){
+  try{
+    const hoy = new Date();
+    const diaSemana = hoy.getDay(); // 0=Dom,1=Lun,2=Mar...
+    if(diaSemana !== 2) return; // Solo martes
+
+    const fechaHoy = hoy.toISOString().split("T")[0];
+    const ultimoEnvio = localStorage.getItem(LUNES_KEY);
+    if(ultimoEnvio === fechaHoy) return; // Ya se envió hoy
+
+    const pendientes = opps.filter(o => o.stage === "Hacer seguimiento");
+    if(!pendientes.length){
+      localStorage.setItem(LUNES_KEY, fechaHoy);
+      return;
+    }
+
+    // Agrupar por responsable
+    const porResponsable = {};
+    pendientes.forEach(o=>{
+      const key = o.assignee?.name || "Sin asignar";
+      if(!porResponsable[key]) porResponsable[key] = [];
+      porResponsable[key].push(o);
+    });
+
+    // Construir HTML del correo
+    let tablaHTML = `
+    <div style="font-family:Arial,sans-serif;max-width:800px;margin:0 auto">
+      <h2 style="color:#4f46e5;border-bottom:2px solid #4f46e5;padding-bottom:8px">
+        📋 Oportunidades pendientes de seguimiento
+      </h2>
+      <p style="color:#64748b">
+        Reporte semanal generado el ${hoy.toLocaleDateString("es-CO",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}.
+        <b>${pendientes.length} ofertas</b> requieren seguimiento.
+      </p>`;
+
+    for(const [resp, lista] of Object.entries(porResponsable)){
+      tablaHTML += `
+      <h3 style="color:#334155;margin-top:24px">👤 ${resp} (${lista.length})</h3>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:16px">
+        <thead>
+          <tr style="background:#4f46e5;color:white">
+            <th style="padding:8px 12px;text-align:left">Cliente</th>
+            <th style="padding:8px 12px;text-align:left">Oferta</th>
+            <th style="padding:8px 12px;text-align:left">Asunto</th>
+            <th style="padding:8px 12px;text-align:left">Seguimientos</th>
+            <th style="padding:8px 12px;text-align:left">Fecha envío</th>
+          </tr>
+        </thead>
+        <tbody>`;
+      lista.forEach((o,i)=>{
+        const bg = i%2===0?"#f8fafc":"#ffffff";
+        tablaHTML += `
+          <tr style="background:${bg}">
+            <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;font-weight:600">${o.client_name||"—"}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;color:#6366f1">${o.name||"—"}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:12px">${o.email_subject||"—"}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;text-align:center">
+              <span style="background:#fef3c7;color:#d97706;padding:2px 8px;border-radius:12px;font-weight:600;font-size:12px">
+                #${o.follow_count||0}
+              </span>
+            </td>
+            <td style="padding:8px 12px;border-bottom:1px solid #e2e8f0;color:#64748b;font-size:12px">${o.sent_date?new Date(o.sent_date+"T12:00:00").toLocaleDateString("es-CO",{day:"2-digit",month:"short",year:"numeric"}):"—"}</td>
+          </tr>`;
+      });
+      tablaHTML += `</tbody></table>`;
+    }
+    tablaHTML += `
+      <p style="color:#94a3b8;font-size:12px;margin-top:24px;border-top:1px solid #e2e8f0;padding-top:12px">
+        Este correo fue generado automáticamente por el CRM Weisz cada martes.
+      </p>
+    </div>`;
+
+    const asunto = `📋 Seguimientos pendientes — ${pendientes.length} ofertas (${hoy.toLocaleDateString("es-CO",{day:"2-digit",month:"long"})})`;
+    const ok = await sendEmailGraph(CORREO_SEGUIMIENTO, asunto, tablaHTML);
+    if(ok){
+      localStorage.setItem(LUNES_KEY, fechaHoy);
+      console.log(`✅ Correo seguimientos enviado a ${CORREO_SEGUIMIENTO}`);
+    } else {
+      console.warn("⚠️ Correo seguimientos no pudo enviarse");
+    }
+  }catch(e){
+    console.error("checkEnviarCorreoMartes:",e.message);
+  }
+}
+// ══════════════════════════════════════════════════════════════════
+
 async function autoAdvanceOpps(){
   const today = new Date().toISOString().split('T')[0];
   // Find En espera with past next_follow_date
@@ -580,6 +822,8 @@ async function autoAdvanceOpps(){
   renderOpps();
   renderOStats();
   console.log("✅ Auto-avance completado");
+  // Enviar correo de seguimientos pendientes cada martes
+  checkEnviarCorreoMartes();
 }
 
 let CU_ROLE = "usuario";
@@ -837,6 +1081,12 @@ async function createTask(){
     clearTimeout(timeout);
     if(error){alert("Error al guardar: "+error.message);return;}
     g("m-newtask").style.display="none";
+    // Notificar Teams al responsable asignado
+    const assigneeIdNew = g("nt-ass").value;
+    const titleNew = g("nt-title").value.trim();
+    const clientNew = g("nt-client").value||null;
+    const deadlineNew = g("nt-date").value||null;
+    if(assigneeIdNew) notificarTareaTeams(assigneeIdNew, titleNew, clientNew, deadlineNew, CU.id);
     await fetchAll();
   }catch(e){
     if(e.name==="AbortError"){
@@ -1166,10 +1416,12 @@ async function renderAdminUsers(){
       <div style="width:32px;height:32px;border-radius:50%;background:${avc(u.name)};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:white">${ini(u.name)}</div>
       <span style="font-weight:600;font-size:13px">${u.name}</span></div></td>
     <td style="font-size:12px;color:var(--t3)">${u.email}</td>
+    <td style="font-size:12px;color:var(--t3)">${u.teams_email||'<span style="color:var(--t5);font-style:italic">No configurado</span>'}</td>
     <td><span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;background:${ROLE_COLORS[u.role||"usuario"]}22;color:${ROLE_COLORS[u.role||"usuario"]}">${ROLES[u.role||"usuario"]}</span></td>
     <td><span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:6px;background:${u.active?"rgba(16,185,129,.12)":"rgba(239,68,68,.12)"};color:${u.active?"#10b981":"#ef4444"}">${u.active?"Activo":"Inactivo"}</span></td>
     <td style="display:flex;gap:6px">
       <button onclick="toggleUserRole('${u.id}','${u.role||"usuario"}')" class="btn btn-s" style="font-size:11px;padding:5px 10px">Cambiar rol</button>
+      <button onclick="editTeamsEmail('${u.id}','${u.teams_email||""}','${u.name}')" class="btn btn-s" style="font-size:11px;padding:5px 10px">📧 Teams</button>
       <button onclick="toggleUserActive('${u.id}',${u.active})" class="btn btn-s" style="font-size:11px;padding:5px 10px">${u.active?"Desactivar":"Activar"}</button>
     </td>
   </tr>`).join("");
@@ -1188,8 +1440,15 @@ async function toggleUserActive(userId, current){
   await fetchAll();
 }
 
+async function editTeamsEmail(userId, currentEmail, userName){
+  const nuevoEmail = prompt(`Email Teams de ${userName}:\n(ej: nombre@weiszinstrumentos.onmicrosoft.com)`, currentEmail||"");
+  if(nuevoEmail === null) return; // canceló
+  await db.from("users").update({teams_email: nuevoEmail.trim()||null}).eq("id",userId);
+  renderAdminUsers();
+}
+
 function openNewUser(){ 
-  ["nu-name","nu-email","nu-pass"].forEach(id=>g(id).value="");
+  ["nu-name","nu-email","nu-teams-email","nu-pass"].forEach(id=>g(id).value="");
   g("nu-role").value="usuario";
   g("m-newuser").style.display="flex";
 }
@@ -1213,7 +1472,8 @@ async function createUser(){
     const data=await resp.json();
     if(!resp.ok){alert("Error: "+(data.msg||data.message||"No se pudo crear el usuario"));btn.textContent="Crear usuario";btn.disabled=false;return;}
     const uid=data.id;
-    if(uid) await db.from("users").upsert({id:uid,name,email,role,active:true});
+    const teamsEmail = g("nu-teams-email").value.trim()||null;
+    if(uid) await db.from("users").upsert({id:uid,name,email,teams_email:teamsEmail,role,active:true});
     g("m-newuser").style.display="none";
     alert(`✅ Usuario ${name} creado. Ya puede iniciar sesión con su email y contraseña.`);
     renderAdminUsers();
@@ -1438,6 +1698,11 @@ async function saveEditTask(){
     }).eq("id",curTask.id);
     if(error)throw new Error(error.message);
     g("m-edittask").style.display="none";
+    // Notificar Teams si cambió el responsable
+    const newAssigneeId = g("et-ass").value;
+    if(newAssigneeId && newAssigneeId !== curTask.assignee_id){
+      notificarTareaTeams(newAssigneeId, g("et-title").value.trim(), g("et-client").value||null, g("et-date").value||null, CU.id);
+    }
     await fetchAll();
     // Reopen task modal with updated data
     const updated=tasks.find(t=>t.id===curTask.id);
@@ -1574,6 +1839,8 @@ function switchModule(m){
     <input type="text" id="nu-name" placeholder="Nombre del usuario" style="margin-bottom:14px"/>
     <label class="lbl">Email *</label>
     <input type="email" id="nu-email" placeholder="usuario@weisz.com.co" style="margin-bottom:14px"/>
+    <label class="lbl">Email Teams (opcional)</label>
+    <input type="email" id="nu-teams-email" placeholder="usuario@weiszinstrumentos.onmicrosoft.com" style="margin-bottom:14px"/>
     <label class="lbl">Contraseña inicial *</label>
     <input type="password" id="nu-pass" placeholder="Mínimo 8 caracteres" style="margin-bottom:14px"/>
     <label class="lbl">Rol</label>
