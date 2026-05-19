@@ -1441,15 +1441,22 @@ async function toggleUserActive(userId, current){
 }
 
 async function editTeamsEmail(userId){
-  // Buscar usuario actual en Supabase para tener datos frescos
   const{data:u} = await db.from("users").select("name,teams_email").eq("id",userId).single();
-  const userName = u?.name || "usuario";
-  const currentEmail = u?.teams_email || "";
-  const nuevoEmail = prompt("Email Teams de " + userName + ":\n(ej: nombre@weiszinstrumentos.onmicrosoft.com)", currentEmail);
-  if(nuevoEmail === null) return; // canceló
-  const{error} = await db.from("users").update({teams_email: nuevoEmail.trim()||null}).eq("id",userId);
-  if(error){ alert("Error al guardar: "+error.message); return; }
-  alert("✅ Email Teams actualizado");
+  g("met-user-id").value = userId;
+  g("met-user-name").textContent = u?.name || "usuario";
+  g("met-email").value = u?.teams_email || "";
+  g("m-edit-teams").style.display = "flex";
+}
+
+async function saveTeamsEmail(){
+  const userId = g("met-user-id").value;
+  const email  = g("met-email").value.trim();
+  const btn    = g("btn-met");
+  btn.textContent = "Guardando..."; btn.disabled = true;
+  const{error} = await db.from("users").update({teams_email: email||null}).eq("id",userId);
+  btn.textContent = "Guardar"; btn.disabled = false;
+  if(error){ alert("Error: "+error.message); return; }
+  g("m-edit-teams").style.display = "none";
   renderAdminUsers();
 }
 
@@ -1908,6 +1915,21 @@ function switchModule(m){
       <div><label class="lbl">Prioridad</label><select id="et-pr"><option>Alta</option><option>Media</option><option>Baja</option></select></div>
     </div>
     <button class="btn btn-p" id="btn-et" onclick="saveEditTask()" style="width:100%;padding:12px;font-size:14px">Guardar cambios</button>
+  </div>
+</div>
+
+<!-- MODAL EDITAR EMAIL TEAMS -->
+<div id="m-edit-teams" class="modal-bg" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" style="max-width:400px;padding:26px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 style="font-size:17px;font-weight:700;color:var(--t1)">Email Teams</h2>
+      <button onclick="document.getElementById('m-edit-teams').style.display='none'" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:20px">&#x2715;</button>
+    </div>
+    <p style="font-size:13px;color:var(--t3);margin-bottom:16px">Configurando email Teams para <strong id="met-user-name"></strong></p>
+    <input type="hidden" id="met-user-id"/>
+    <label class="lbl">Email Teams *</label>
+    <input type="email" id="met-email" placeholder="usuario@weiszinstrumentos.onmicrosoft.com" style="margin-bottom:20px"/>
+    <button class="btn btn-p" id="btn-met" onclick="saveTeamsEmail()" style="width:100%;padding:12px;font-size:14px">Guardar</button>
   </div>
 </div>
 </body>
