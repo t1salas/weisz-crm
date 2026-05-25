@@ -1974,10 +1974,11 @@ document.addEventListener("click", e=>{
 async function notificarMenciones(txt, contexto, titulo, subtitulo){
   try{
     const mentions = [...new Set(txt.split(' ').filter(w=>w.startsWith('@')&&w.length>1).map(w=>w.slice(1).split("").filter(c=>!".,!?;:".includes(c)).join("")))];
-    if(!mentions.length) return;
+    console.log("mentions detectadas:", mentions); if(!mentions.length){ console.log("Sin menciones encontradas"); return; }
     const autor = users.find(u=>u.id===CU.id)?.name || CU.email;
     for(const nombre of mentions){
       const dest = users.find(u=>u.name.toLowerCase()===nombre.toLowerCase() && u.id!==CU.id);
+      console.log("Buscando:", nombre, "→ encontrado:", dest?.name, "email:", dest?.email);
       if(!dest?.email) continue;
       const txtHtml = txt.split("\n").join("<br>");
       const msg = "<b>\uD83D\uDD14 Te mencionaron en un comentario</b><br>"+
