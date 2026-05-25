@@ -290,7 +290,8 @@ textarea{resize:vertical;min-height:70px}
           <span id="vis-week-label" style="font-weight:700;font-size:14px;color:var(--t1)"></span>
           <button onclick="semanaSiguiente()" class="btn btn-s" style="padding:7px 14px">Siguiente →</button>
         </div>
-        <div id="vis-calendar-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px"></div>
+        <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:4px" id="vis-dow-header"></div>
+        <div id="vis-calendar-grid" style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px"></div>
       </div>
     </div>
   </main>
@@ -1897,7 +1898,7 @@ function switchModule(m){
 // ══════════════════════════════════════════════════════════
 let visitas = [];
 let visView = "lista";
-let visSemanaOffset = 0; // semanas desde hoy
+let visMonthOffset = 0; // meses desde hoy
 let visInitDone = false;
 
 async function initVisitas(){
@@ -1906,8 +1907,9 @@ async function initVisitas(){
     visInitDone = true;
     // Default: semana actual
     const today = new Date();
-    g("vis-from").value = startOfWeek(today).toISOString().split("T")[0];
-    g("vis-to").value   = endOfWeek(today).toISOString().split("T")[0];
+    const y=today.getFullYear(),mo=today.getMonth();
+    g("vis-from").value = new Date(y,mo,1).toISOString().split("T")[0];
+    g("vis-to").value   = new Date(y,mo+1,0).toISOString().split("T")[0];
   }
   // Populate vendedor select
   const sel = g("vis-vendedor");
@@ -1960,8 +1962,8 @@ function endOfWeek(d){
   dt.setHours(23,59,59,999);
   return dt;
 }
-function semanaAnterior(){ visSemanaOffset--; renderVisitas(); }
-function semanaSiguiente(){ visSemanaOffset++; renderVisitas(); }
+function semanaAnterior(){ visMonthOffset--; renderVisitas(); }
+function semanaSiguiente(){ visMonthOffset++; renderVisitas(); }
 
 function filterVisitas(){
   const srch=(g("vis-search")?.value||"").toLowerCase();
@@ -2008,42 +2010,55 @@ function renderVistaLista(){
 }
 
 function renderVistaSemana(){
-  const base = new Date();
-  base.setDate(base.getDate() + visSemanaOffset*7);
-  const lunes = startOfWeek(base);
-  const dias = ["Lun","Mar","Mié","Jue","Vie"];
-  const fechas = Array.from({length:5},(_,i)=>{
-    const d=new Date(lunes);d.setDate(d.getDate()+i);return d;
-  });
+  const base=new Date();
+  base.setMonth(base.getMonth()+visMonthOffset);
+  const year=base.getFullYear(), month=base.getMonth();
 
-  const lbl = `${fechas[0].toLocaleDateString("es-CO",{day:"2-digit",month:"short"})} — ${fechas[4].toLocaleDateString("es-CO",{day:"2-digit",month:"short",year:"numeric"})}`;
-  g("vis-week-label").textContent = lbl;
+  const lbl=new Date(year,month,1).toLocaleDateString("es-CO",{month:"long",year:"numeric"});
+  g("vis-week-label").textContent=lbl.charAt(0).toUpperCase()+lbl.slice(1);
 
-  const canEdit = CU_ROLE==="admin"||CU_ROLE==="vendedor";
+  const dowNames=["Lun","Mar","Mi\u00e9","Jue","Vie","S\u00e1b","Dom"];
+  const dowH=g("vis-dow-header");
+  if(dowH) dowH.innerHTML=dowNames.map(d=>'<div style="text-align:center;font-size:10px;font-weight:700;color:var(--t3);text-transform:uppercase;letter-spacing:.5px;padding:4px 0">'+d+'</div>').join("");
+
+  const firstDay=new Date(year,month,1);
+  const totalDays=new Date(year,month+1,0).getDate();
+  let startDow=firstDay.getDay()-1; if(startDow<0) startDow=6;
+
+  const todayIso=new Date().toISOString().split("T")[0];
   const srch=(g("vis-search")?.value||"").toLowerCase();
+  const canEdit=CU_ROLE==="admin"||CU_ROLE==="vendedor";
 
-  g("vis-calendar-grid").innerHTML = fechas.map((d,i)=>{
-    const iso = d.toISOString().split("T")[0];
-    const isHoy = iso===new Date().toISOString().split("T")[0];
-    const dayVis = visitas.filter(v=>{
+  const cells=[];
+  for(let i=0;i<startDow;i++) cells.push('<div style="min-height:90px"></div>');
+
+  for(let day=1;day<=totalDays;day++){
+    const iso=year+"-"+String(month+1).padStart(2,"0")+"-"+String(day).padStart(2,"0");
+    const isHoy=iso===todayIso;
+    const dayVis=visitas.filter(v=>{
       if(v.fecha!==iso) return false;
-      if(srch && !v.cliente?.toLowerCase().includes(srch) && !v.participantes?.toLowerCase().includes(srch)) return false;
+      if(srch&&!v.cliente?.toLowerCase().includes(srch)&&!v.participantes?.toLowerCase().includes(srch)) return false;
       return true;
     });
-    return `<div style="background:var(--card);border:1px solid ${isHoy?"var(--ac)":"var(--bor)"};border-radius:12px;overflow:hidden;min-height:180px">
-      <div style="padding:10px 12px;background:${isHoy?"var(--ac)":"var(--inp)"};border-bottom:1px solid var(--bor)">
-        <p style="margin:0;font-size:11px;font-weight:700;color:${isHoy?"white":"var(--t3)"};text-transform:uppercase;letter-spacing:.5px">${dias[i]}</p>
-        <p style="margin:0;font-size:18px;font-weight:700;color:${isHoy?"white":"var(--t1)"}">${d.getDate()}</p>
-      </div>
-      <div style="padding:8px">
-        ${dayVis.map(v=>`<div onclick="openEditVisita('${v.id}')" style="background:var(--pill);border-left:3px solid var(--ac);border-radius:6px;padding:7px 9px;margin-bottom:6px;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.75'" onmouseout="this.style.opacity='1'">
-          <p style="margin:0;font-size:12px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.cliente}</p>
-          <p style="margin:0;font-size:10px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.participantes||v.ubicacion||""}</p>
-        </div>`).join("")}
-        ${canEdit?`<button onclick="openNewVisitaFecha('${iso}')" style="width:100%;background:none;border:1px dashed var(--bor);border-radius:6px;padding:5px;color:var(--t5);cursor:pointer;font-size:11px;margin-top:4px" onmouseover="this.style.borderColor='var(--ac)';this.style.color='var(--ac)'" onmouseout="this.style.borderColor='var(--bor)';this.style.color='var(--t5)'">+ Agregar</button>`:""}
-      </div>
-    </div>`;
-  }).join("");
+    const cnt=dayVis.length;
+    const bdr=isHoy?"var(--ac)":"var(--bor)";
+    const hdr=isHoy?"var(--ac)":"var(--inp)";
+    const txtc=isHoy?"white":"var(--t1)";
+    let inner='<div style="background:'+hdr+';border-bottom:1px solid var(--bor);padding:5px 7px;display:flex;align-items:center;justify-content:space-between">'
+      +'<span style="font-size:13px;font-weight:700;color:'+txtc+'">'+day+'</span>'
+      +(cnt?'<span style="font-size:10px;font-weight:700;background:'+(isHoy?"rgba(255,255,255,.3)":"var(--ac)")+';color:white;padding:1px 6px;border-radius:10px">'+cnt+'</span>':"")
+      +'</div><div style="padding:5px">';
+    dayVis.forEach(v=>{
+      inner+='<div onclick="openEditVisita(\''+v.id+'\')" style="background:var(--pill);border-left:2px solid var(--ac);border-radius:5px;padding:4px 6px;margin-bottom:3px;cursor:pointer" onmouseover="this.style.opacity=\'.75\'" onmouseout="this.style.opacity=\'1\'">'
+        +'<p style="margin:0;font-size:11px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+v.cliente+'</p>'
+        +'<p style="margin:0;font-size:9px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+(v.participantes||v.ubicacion||"")+'</p>'
+        +'</div>';
+    });
+    if(canEdit) inner+='<button onclick="openNewVisitaFecha(\''+iso+'\')" style="width:100%;background:none;border:none;color:var(--t5);cursor:pointer;font-size:10px;padding:2px 0;text-align:left" onmouseover="this.style.color=\'var(--ac)\'" onmouseout="this.style.color=\'var(--t5)\'">+ agregar</button>';
+    inner+='</div>';
+    cells.push('<div style="background:var(--card);border:1px solid '+bdr+';border-radius:10px;overflow:hidden;min-height:90px'+(cnt?';box-shadow:0 2px 8px rgba(99,102,241,.1)':"")+'">'+inner+'</div>');
+  }
+  g("vis-calendar-grid").innerHTML=cells.join("");
 }
 
 function openNewVisita(){
