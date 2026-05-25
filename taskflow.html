@@ -1977,7 +1977,7 @@ async function notificarMenciones(txt, contexto, titulo, subtitulo){
     console.log("mentions detectadas:", mentions); if(!mentions.length){ console.log("Sin menciones encontradas"); return; }
     const autor = users.find(u=>u.id===CU.id)?.name || CU.email;
     for(const nombre of mentions){
-      const dest = users.find(u=>u.name.toLowerCase()===nombre.toLowerCase() && u.id!==CU.id);
+      const dest = users.find(u=>u.name.toLowerCase().includes(nombre.toLowerCase()) && u.id!==CU.id);
       console.log("Buscando:", nombre, "→ encontrado:", dest?.name, "email:", dest?.email);
       if(!dest?.email) continue;
       const txtHtml = txt.split("\n").join("<br>");
