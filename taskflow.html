@@ -1927,13 +1927,17 @@ function showMentionList(textarea, listId, query){
     u.name.toLowerCase().includes(query.toLowerCase())
   ).slice(0,6);
   if(!matches.length){ closeMentionList(listId); return; }
-  list.innerHTML = matches.map(u=>`
-    <div onclick="insertMention('${textarea.id}','${listId}','${u.name}')"
-      style="display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer"
-      onmouseover="this.style.background='var(--hov)'" onmouseout="this.style.background=''">
-      <div style="width:26px;height:26px;border-radius:50%;background:${avc(u.name)};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;flex-shrink:0">${ini(u.name)}</div>
-      <span style="font-size:13px;color:var(--t1)">${u.name}</span>
-    </div>`).join("");
+  list.innerHTML = "";
+  matches.forEach(u=>{
+    const div=document.createElement("div");
+    div.style.cssText="display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer";
+    div.dataset.name=u.name;
+    div.innerHTML='<div style="width:26px;height:26px;border-radius:50%;background:'+avc(u.name)+';display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;flex-shrink:0">'+ini(u.name)+'</div><span style="font-size:13px;color:var(--t1)">'+u.name+'</span>';
+    div.onmouseover=()=>div.style.background="var(--hov)";
+    div.onmouseout=()=>div.style.background="";
+    div.onclick=()=>insertMention(textarea.id, listId, u.name);
+    list.appendChild(div);
+  });
   list.style.display = "block";
 }
 
