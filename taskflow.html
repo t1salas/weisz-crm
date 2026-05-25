@@ -1973,7 +1973,7 @@ document.addEventListener("click", e=>{
 // Parsear menciones del texto y notificar por Teams
 async function notificarMenciones(txt, contexto, titulo, subtitulo){
   try{
-    const mentions = [...new Set(txt.split(' ').filter(w=>w.startsWith('@')&&w.length>1).map(w=>w.slice(1).replace(/[.,!?;:]/g,'')))];
+    const mentions = [...new Set(txt.split(' ').filter(w=>w.startsWith('@')&&w.length>1).map(w=>w.slice(1).split("").filter(c=>!".,!?;:".includes(c)).join("")))];
     if(!mentions.length) return;
     const autor = users.find(u=>u.id===CU.id)?.name || CU.email;
     for(const nombre of mentions){
