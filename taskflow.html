@@ -2187,15 +2187,20 @@ async function exportVisitas(){
     const from=g("vis-from")?.value||"";
     const to=g("vis-to")?.value||"";
     const fname=`Visitas_Comerciales${from?"_"+from:""}${to?"_al_"+to:""}.xlsx`;
-    XLSX.writeFile(wb,fname);
+    // Use base64 data URL to avoid blob:// HTTPS restriction
+    const wbout = XLSX.write(wb,{bookType:"xlsx",type:"base64"});
+    const a=document.createElement("a");
+    a.href="data:application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;base64,"+wbout;
+    a.download=fname;
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
   }catch(e){
-    // Fallback: download as CSV
+    // Fallback: CSV with base64
     const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
-    const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
-    const url=URL.createObjectURL(blob);
-    const a=document.createElement("a");a.href=url;
-    a.download=`Visitas_Comerciales.csv`;a.click();
-    URL.revokeObjectURL(url);
+    const b64=btoa(unescape(encodeURIComponent(csv)));
+    const a=document.createElement("a");
+    a.href="data:text/csv;charset=utf-8;base64,"+b64;
+    a.download="Visitas_Comerciales.csv";
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
   }
 }
 // ══════════════════════════════════════════════════════════
