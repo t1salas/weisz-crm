@@ -91,6 +91,7 @@ textarea{resize:vertical;min-height:70px}
       <div class="nav-item active" id="nav-t" onclick="switchModule('tareas')">✓ Tareas</div>
       <div class="nav-item" id="nav-o" onclick="switchModule('oportunidades')">📋 Oportunidades</div>
       <div class="nav-item" id="nav-c" onclick="switchModule('contactos')">👥 Contactos</div>
+      <div class="nav-item" id="nav-v" onclick="switchModule('visitas')">📅 Visitas</div>
       <div class="nav-item" id="nav-admin" onclick="switchModule('admin')" style="display:none">⚙️ Administración</div>
       <div style="margin-top:20px;padding:0 4px">
         <p style="font-size:10px;color:var(--t5);text-transform:uppercase;letter-spacing:.8px;margin-bottom:8px;padding:0 8px">Proyectos</p>
@@ -142,7 +143,7 @@ textarea{resize:vertical;min-height:70px}
         <div><h1 style="font-size:20px;font-weight:700;letter-spacing:-.5px;margin-bottom:3px">Oportunidades</h1><p style="color:var(--t3);font-size:12px">Seguimiento de solicitudes y ofertas</p></div>
         
       </div>
-      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:24px" id="o-stats"></div>
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:24px" id="o-stats"></div>
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
         <div style="position:relative;flex:1;min-width:180px;max-width:320px">
           <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:13px">🔍</span>
@@ -154,10 +155,9 @@ textarea{resize:vertical;min-height:70px}
           <button class="filter-btn" id="of-Hacer seguimiento" onclick="setOF('Hacer seguimiento')">Hacer seguimiento</button>
           <button class="filter-btn" id="of-En espera" onclick="setOF('En espera')">En espera</button>
           <button class="filter-btn" id="of-Perdida" onclick="setOF('Perdida')">Perdida</button>
-          <button class="filter-btn" id="of-Ganada" onclick="setOF('Ganada')">Ganada</button>
         </div>
       </div>
-      <div class="card" style="border-radius:14px;overflow:hidden"><table><thead><tr><th style="width:40px"><input type="checkbox" id="chk-all" onclick="toggleAllOpps(this)" style="width:16px;height:16px;cursor:pointer"/></th><th style="width:20px"></th><th>Cliente</th><th>Nombre oferta</th><th>Asunto correo</th><th>Responsable</th><th>Observación</th><th>Etapa</th><th>Fecha envío</th></tr></thead><tbody id="o-body"></tbody></table></div>
+      <div class="card" style="border-radius:14px;overflow:hidden"><table><thead><tr><th style="width:40px"><input type="checkbox" id="chk-all" onclick="toggleAllOpps(this)" style="width:16px;height:16px;cursor:pointer"/></th><th>Cliente</th><th>Oferta</th><th>Asunto correo</th><th>Responsable</th><th>Observación</th><th>Etapa</th><th>Fecha envío</th></tr></thead><tbody id="o-body"></tbody></table></div>
     </div>
 
     <!-- BARRA FLOTANTE SELECCIÓN MÚLTIPLE -->
@@ -230,6 +230,67 @@ textarea{resize:vertical;min-height:70px}
           <table><thead><tr><th>Tipo</th><th>Nombre</th><th>Eliminado por</th><th>Fecha</th><th></th></tr></thead>
           <tbody id="admin-trash-tbody"><tr><td colspan="5" style="padding:32px;text-align:center;color:var(--t5)">Papelera vacía</td></tr></tbody></table>
         </div>
+      </div>
+    </div>
+
+    <!-- MÓDULO VISITAS -->
+    <div id="mod-visitas" style="display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:22px 0 18px;border-bottom:1px solid var(--bor);margin-bottom:24px">
+        <div>
+          <h1 style="font-size:20px;font-weight:700;letter-spacing:-.5px;margin-bottom:3px">Visitas Comerciales</h1>
+          <p id="vis-subtitle" style="color:var(--t3);font-size:12px">Registro semanal de visitas</p>
+        </div>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button id="btn-export-vis" class="btn btn-s" onclick="exportVisitas()" style="font-size:12px;padding:8px 16px">⬇ Exportar Excel</button>
+          <button id="btn-new-vis" class="btn btn-p" onclick="openNewVisita()" style="box-shadow:0 4px 20px var(--sh)">+ Nueva visita</button>
+        </div>
+      </div>
+
+      <!-- Controles: búsqueda + filtro período + vista -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <div style="position:relative;flex:1;min-width:180px;max-width:280px">
+          <span style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--t3);font-size:13px">🔍</span>
+          <input type="text" id="vis-search" placeholder="Buscar cliente, participante..." style="padding-left:32px" oninput="renderVisitas()"/>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <input type="date" id="vis-from" style="width:140px;font-size:12px" onchange="renderVisitas()"/>
+          <span style="color:var(--t3);font-size:12px">→</span>
+          <input type="date" id="vis-to" style="width:140px;font-size:12px" onchange="renderVisitas()"/>
+          <button onclick="clearVisFilter()" style="background:none;border:none;color:var(--t4);cursor:pointer;font-size:11px;padding:4px 8px">✕ Limpiar</button>
+        </div>
+        <div class="card" style="display:flex;border-radius:9px;overflow:hidden;padding:0;margin-left:auto">
+          <button class="view-btn active" id="vvw-lista" onclick="setVisView('lista')">☰</button>
+          <button class="view-btn" id="vvw-semana" onclick="setVisView('semana')">📅</button>
+        </div>
+      </div>
+
+      <!-- Vista lista -->
+      <div id="vis-list-view">
+        <div class="card" style="border-radius:14px;overflow:hidden">
+          <table>
+            <thead><tr>
+              <th style="width:110px">Fecha</th>
+              <th>Cliente</th>
+              <th>Ubicación</th>
+              <th>Participantes</th>
+              <th>Comentarios</th>
+              <th>To Do</th>
+              <th style="width:110px">Próx. reunión</th>
+              <th style="width:40px"></th>
+            </tr></thead>
+            <tbody id="vis-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Vista calendario semanal -->
+      <div id="vis-week-view" style="display:none">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+          <button onclick="semanaAnterior()" class="btn btn-s" style="padding:7px 14px">← Anterior</button>
+          <span id="vis-week-label" style="font-weight:700;font-size:14px;color:var(--t1)"></span>
+          <button onclick="semanaSiguiente()" class="btn btn-s" style="padding:7px 14px">Siguiente →</button>
+        </div>
+        <div id="vis-calendar-grid" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px"></div>
       </div>
     </div>
   </main>
@@ -371,7 +432,7 @@ textarea{resize:vertical;min-height:70px}
     <label class="lbl">Observación rápida</label><input type="text" id="no-note" placeholder="Nota corta importante" style="margin-bottom:14px"/>
     <label class="lbl">Fecha de envío</label><input type="date" id="no-date" style="margin-bottom:14px"/>
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:14px">
-      <div><label class="lbl">Etapa</label><select id="no-stg"><option>Oferta reciente</option><option>Hacer seguimiento</option><option>En espera</option><option>Perdida</option><option>Ganada</option></select></div>
+      <div><label class="lbl">Etapa</label><select id="no-stg"><option>Oferta reciente</option><option>Hacer seguimiento</option><option>En espera</option><option>Perdida</option></select></div>
       <div><label class="lbl">Responsable</label><select id="no-ass"></select></div>
       <div><label class="lbl">Estado</label><select id="no-st"><option value="verde">Verde</option><option value="amarillo">Amarillo</option><option value="rojo">Rojo</option></select></div>
     </div>
@@ -393,7 +454,7 @@ let theme=localStorage.getItem("wcrm-theme")||"dark";
 const AVC=["#8b5cf6","#06b6d4","#f43f5e","#10b981","#f59e0b","#3b82f6","#ec4899","#14b8a6"];
 const avc=s=>AVC[(s?.charCodeAt(0)||0)%AVC.length];
 const ini=n=>n?.split(" ").map(x=>x[0]).join("").toUpperCase().slice(0,2)||"?";
-const fd=d=>d?new Date(d+"T12:00:00").toLocaleDateString("es-CO",{day:"2-digit",month:"2-digit",year:"numeric"}):"—";
+const fd=d=>d?new Date(d+"T12:00:00").toLocaleDateString("es-CO",{day:"2-digit",month:"short"}):"—";
 const fdt=d=>d?new Date(d).toLocaleDateString("es-CO",{day:"2-digit",month:"short",hour:"2-digit",minute:"2-digit"}):"";
 const g=id=>document.getElementById(id);
 
@@ -401,8 +462,8 @@ const STC={"Pendiente":"#f59e0b","En progreso":"#3b82f6","Completado":"#10b981"}
 const STB={"Pendiente":"rgba(245,158,11,.12)","En progreso":"rgba(59,130,246,.12)","Completado":"rgba(16,185,129,.12)"};
 const PRC={"Alta":"#ef4444","Media":"#f97316","Baja":"#6b7280"};
 const PRB={"Alta":"rgba(239,68,68,.12)","Media":"rgba(249,115,22,.12)","Baja":"rgba(107,114,128,.12)"};
-const SGC={"Oferta reciente":"#06b6d4","Hacer seguimiento":"#f59e0b","En espera":"#3b82f6","Perdida":"#ef4444","Ganada":"#10b981"};
-const SGB={"Oferta reciente":"rgba(6,182,212,.12)","Hacer seguimiento":"rgba(245,158,11,.12)","En espera":"rgba(59,130,246,.12)","Perdida":"rgba(239,68,68,.12)","Ganada":"rgba(16,185,129,.12)"};
+const SGC={"Oferta reciente":"#06b6d4","Hacer seguimiento":"#f59e0b","En espera":"#3b82f6","Perdida":"#ef4444"};
+const SGB={"Oferta reciente":"rgba(6,182,212,.12)","Hacer seguimiento":"rgba(245,158,11,.12)","En espera":"rgba(59,130,246,.12)","Perdida":"rgba(239,68,68,.12)"};
 const SMC={"verde":"#10b981","amarillo":"#f59e0b","rojo":"#ef4444","azul":"#3b82f6"};
 
 function applyTheme(){
@@ -796,63 +857,6 @@ async function checkEnviarCorreoMartes(){
 }
 // ══════════════════════════════════════════════════════════════════
 
-
-// ── ASIGNACIÓN RÁPIDA DE RESPONSABLE ─────────────────────────────
-async function assignOppQuick(oppId, currentAssigneeId, evt){
-  if(CU_ROLE==="lector") return;
-  const candidates = users.filter(u=>u.active);
-  if(!candidates.length){ alert("No hay usuarios disponibles."); return; }
-
-  // Eliminar menú previo si existe
-  const prev=document.getElementById("assign-menu");if(prev)prev.remove();
-
-  const menu = document.createElement("div");
-  menu.id="assign-menu";
-  menu.style.cssText="position:fixed;z-index:9999;background:var(--card);border:1px solid var(--bor);border-radius:12px;box-shadow:0 8px 32px rgba(0,0,0,.3);padding:8px;min-width:210px";
-
-  candidates.forEach(u=>{
-    const isSelected = u.id===currentAssigneeId;
-    const item=document.createElement("div");
-    item.style.cssText=`display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;cursor:pointer;${isSelected?"background:var(--pill);":""}`;
-    item.innerHTML=`<div style="width:26px;height:26px;border-radius:50%;background:${avc(u.name)};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:white;flex-shrink:0">${ini(u.name)}</div><span style="font-size:13px;font-weight:${isSelected?700:400};color:var(--t1)">${u.name}</span>${isSelected?'<span style="margin-left:auto;color:var(--ac);font-size:12px">✓</span>':""}`;
-    item.onmouseover=()=>{if(!isSelected)item.style.background="var(--hov)";};
-    item.onmouseout =()=>{if(!isSelected)item.style.background="";};
-    item.onclick=async()=>{
-      menu.remove();
-      const{error}=await db.from("opportunities").update({assignee_id:u.id,updated_at:new Date().toISOString()}).eq("id",oppId);
-      if(error){alert("Error al asignar: "+error.message);return;}
-      const o=opps.find(x=>x.id===oppId);
-      if(o){o.assignee_id=u.id;o.assignee={id:u.id,name:u.name};}
-      renderOpps();
-    };
-    menu.appendChild(item);
-  });
-
-  if(currentAssigneeId){
-    const sep=document.createElement("div");sep.style.cssText="height:1px;background:var(--bor);margin:6px 0";menu.appendChild(sep);
-    const clear=document.createElement("div");
-    clear.style.cssText="padding:9px 12px;border-radius:8px;cursor:pointer;font-size:12px;color:var(--t5)";
-    clear.textContent="Quitar responsable";
-    clear.onmouseover=()=>clear.style.background="var(--hov)";
-    clear.onmouseout =()=>clear.style.background="";
-    clear.onclick=async()=>{
-      menu.remove();
-      await db.from("opportunities").update({assignee_id:null,updated_at:new Date().toISOString()}).eq("id",oppId);
-      const o=opps.find(x=>x.id===oppId);if(o){o.assignee_id=null;o.assignee=null;}
-      renderOpps();
-    };
-    menu.appendChild(clear);
-  }
-
-  document.body.appendChild(menu);
-  const td=evt.currentTarget||evt.target.closest("td");
-  const r=td.getBoundingClientRect();
-  menu.style.top=(r.bottom+4)+"px";
-  menu.style.left=Math.min(r.left,window.innerWidth-220)+"px";
-  const close=e=>{if(!menu.contains(e.target)){menu.remove();document.removeEventListener("click",close,true);}};
-  setTimeout(()=>document.addEventListener("click",close,true),0);
-}
-
 async function autoAdvanceOpps(){
   const today = new Date().toISOString().split('T')[0];
   // Find En espera with past next_follow_date
@@ -1105,8 +1109,13 @@ async function addTaskCmt(){
   }
 }
 async function dlTaskFile(path,name){
-  const{data}=await db.storage.from("task-files").download(path);
-  if(data){const url=URL.createObjectURL(data),a=document.createElement("a");a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);}
+  const{data,error}=await db.storage.from("task-files").download(path);
+  if(error){alert("Error al descargar: "+error.message);return;}
+  if(data){
+    const reader=new FileReader();
+    reader.onload=()=>{const a=document.createElement("a");a.href=reader.result;a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);};
+    reader.readAsDataURL(data);
+  }
 }
 
 async function advTaskStatus(){if(curTask){await cyclTask(curTask.id,curTask.status);openTask(curTask.id);}}
@@ -1158,8 +1167,8 @@ async function createTask(){
 }
 
 function renderOStats(){
-  const tot=opps.length,rc=opps.filter(o=>o.stage==="Oferta reciente").length,hs=opps.filter(o=>o.stage==="Hacer seguimiento").length,ee=opps.filter(o=>o.stage==="En espera").length,pe=opps.filter(o=>o.stage==="Perdida").length,ga=opps.filter(o=>o.stage==="Ganada").length;
-  g("o-stats").innerHTML=[{l:"Total",n:tot,c:"var(--ac)"},{l:"Oferta reciente",n:rc,c:"#06b6d4"},{l:"Hacer seguimiento",n:hs,c:"#f59e0b"},{l:"En espera",n:ee,c:"#3b82f6"},{l:"Perdidas",n:pe,c:"#ef4444"},{l:"Ganadas",n:ga,c:"#10b981"}]
+  const tot=opps.length,rc=opps.filter(o=>o.stage==="Oferta reciente").length,hs=opps.filter(o=>o.stage==="Hacer seguimiento").length,ee=opps.filter(o=>o.stage==="En espera").length,pe=opps.filter(o=>o.stage==="Perdida").length;
+  g("o-stats").innerHTML=[{l:"Total",n:tot,c:"var(--ac)"},{l:"Oferta reciente",n:rc,c:"#06b6d4"},{l:"Hacer seguimiento",n:hs,c:"#f59e0b"},{l:"En espera",n:ee,c:"#3b82f6"},{l:"Perdidas",n:pe,c:"#ef4444"}]
   .map(s=>`<div class="stat-card"><p style="color:var(--t3);font-size:10px;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px">${s.l}</p><p style="font-size:30px;font-weight:700;margin-bottom:10px;color:${s.c};font-family:'DM Mono',monospace">${s.n}</p><div style="height:3px;background:var(--pill);border-radius:2px"><div style="height:100%;width:${tot?(s.n/tot*100):0}%;background:${s.c};border-radius:2px;transition:width .6s ease"></div></div></div>`).join("");
 }
 
@@ -1176,7 +1185,7 @@ function renderOpps(){
     <td><p style="margin:0;font-weight:700;font-size:13px;color:var(--t1)">${o.client_name||"—"}</p></td>
     <td><p style="margin:0;font-size:12px;color:var(--t2)">${o.name||"<span style='color:var(--t5)'>Sin nombre</span>"}</p></td>
     <td style="max-width:220px"><p style="margin:0;font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.email_subject||"—"}</p></td>
-    <td onclick="event.stopPropagation();assignOppQuick('${o.id}','${o.assignee_id||''}',event)" title="Clic para asignar responsable" style="cursor:pointer">${o.assignee?`<div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:${avc(o.assignee.name)};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;flex-shrink:0">${ini(o.assignee.name)}</div><span style="font-size:11px;color:var(--t2)">${o.assignee.name.split(" ")[0]}</span></div>`:`<span style="color:var(--ac);font-size:11px;font-weight:600">+ Asignar</span>`}</td>
+    <td>${o.assignee?`<div style="display:flex;align-items:center;gap:6px"><div style="width:22px;height:22px;border-radius:50%;background:${avc(o.assignee.name)};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:white;flex-shrink:0">${ini(o.assignee.name)}</div><span style="font-size:11px;color:var(--t2)">${o.assignee.name.split(" ")[0]}</span></div>`:`<span style="color:var(--t5);font-size:11px">—</span>`}</td>
     <td style="max-width:180px"><p style="margin:0;font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${o.quick_note||"—"}</p></td>
     <td><span style="display:inline-flex;align-items:center;gap:5px;background:${SGB[o.stage]};border:1px solid ${SGC[o.stage]}44;border-radius:6px;padding:4px 10px;white-space:nowrap"><span class="dot" style="background:${SGC[o.stage]};width:6px;height:6px;flex-shrink:0"></span><span style="font-size:11px;font-weight:600;color:${SGC[o.stage]}">${o.stage}</span></span></td>
     <td style="font-size:11px;color:var(--t3);font-family:'DM Mono',monospace;white-space:nowrap">${fd(o.sent_date)}</td>
@@ -1298,8 +1307,13 @@ async function addCmt(){
 }
 
 async function dlFile(path,name){
-  const{data}=await db.storage.from("opportunity-files").download(path);
-  if(data){const url=URL.createObjectURL(data),a=document.createElement("a");a.href=url;a.download=name;a.click();URL.revokeObjectURL(url);}
+  const{data,error}=await db.storage.from("opportunity-files").download(path);
+  if(error){alert("Error al descargar: "+error.message);return;}
+  if(data){
+    const reader=new FileReader();
+    reader.onload=()=>{const a=document.createElement("a");a.href=reader.result;a.download=name;document.body.appendChild(a);a.click();document.body.removeChild(a);};
+    reader.readAsDataURL(data);
+  }
 }
 
 async function delCurOpp(){
@@ -1325,7 +1339,7 @@ async function createOpp(){
 
 
 // ── SEGUIMIENTO ──────────────────────────────────────────
-const STAGE_ORDER = ["Oferta reciente","Hacer seguimiento","En espera","Ganada","Perdida"];
+const STAGE_ORDER = ["Oferta reciente","Hacer seguimiento","En espera","Perdida"];
 const STAGE_SEGUIMIENTO = ["Hacer seguimiento","En espera"];
 
 function updateOppModalButtons(){
@@ -1335,10 +1349,8 @@ function updateOppModalButtons(){
   const stage = curOpp.stage;
   // Mostrar botón seguimiento solo en etapas de seguimiento
   btnSeg.style.display  = STAGE_SEGUIMIENTO.includes(stage) ? "inline-flex" : "none";
-  // Mostrar botón perdida en seguimientos y oferta reciente (no si ya está perdida/ganada)
-  btnPerd.style.display = (stage !== "Perdida" && stage !== "Ganada") ? "inline-flex" : "none";
-  // Ocultar botón seguimiento si ya está Ganada o Perdida
-  if(stage === "Ganada") btnSeg.style.display = "none";
+  // Mostrar botón perdida en seguimientos y oferta reciente (no si ya está perdida)
+  btnPerd.style.display = (stage !== "Perdida") ? "inline-flex" : "none";
 }
 
 function reportarSeguimiento(){
@@ -1867,14 +1879,305 @@ function switchModule(m){
   g("mod-oportunidades").style.display=m==="oportunidades"?"block":"none";
   g("mod-admin").style.display=m==="admin"?"block":"none";
   g("mod-contactos").style.display=m==="contactos"?"block":"none";
+  g("mod-visitas").style.display=m==="visitas"?"block":"none";
   g("nav-t").classList.toggle("active",m==="tareas");
   g("nav-o").classList.toggle("active",m==="oportunidades");
   g("nav-c").classList.toggle("active",m==="contactos");
+  const nv=document.getElementById("nav-v");if(nv)nv.classList.toggle("active",m==="visitas");
   const na=document.getElementById("nav-admin");if(na)na.classList.toggle("active",m==="admin");
   if(m!=="oportunidades") clearOppSelection();
   if(m==="admin") switchAdminTab("usuarios");
   if(m==="contactos") loadContacts();
+  if(m==="visitas") initVisitas();
 }
+
+
+// ══════════════════════════════════════════════════════════
+// MÓDULO VISITAS COMERCIALES
+// ══════════════════════════════════════════════════════════
+let visitas = [];
+let visView = "lista";
+let visSemanaOffset = 0; // semanas desde hoy
+let visInitDone = false;
+
+async function initVisitas(){
+  if(!visInitDone){
+    await loadVisitas();
+    visInitDone = true;
+    // Default: semana actual
+    const today = new Date();
+    g("vis-from").value = startOfWeek(today).toISOString().split("T")[0];
+    g("vis-to").value   = endOfWeek(today).toISOString().split("T")[0];
+  }
+  // Populate vendedor select
+  const sel = g("vis-vendedor");
+  if(sel){
+    sel.innerHTML = users.filter(u=>u.active).map(u=>`<option value="${u.id}"${u.id===CU.id?" selected":""}>${u.name}</option>`).join("");
+  }
+  renderVisitas();
+  applyVisPermisos();
+}
+
+async function loadVisitas(){
+  const{data} = await db.from("visits")
+    .select("*,vendedor:users!visits_vendedor_id_fkey(id,name)")
+    .order("fecha",{ascending:false});
+  visitas = data||[];
+  g("vis-subtitle").textContent = `${visitas.length} visitas registradas`;
+}
+
+function applyVisPermisos(){
+  const canEdit = CU_ROLE==="admin" || CU_ROLE==="vendedor";
+  const btnNew = g("btn-new-vis");
+  if(btnNew) btnNew.style.display = canEdit ? "inline-flex" : "none";
+}
+
+function setVisView(v){
+  visView=v;
+  g("vvw-lista").classList.toggle("active",v==="lista");
+  g("vvw-semana").classList.toggle("active",v==="semana");
+  g("vis-list-view").style.display  = v==="lista"?"block":"none";
+  g("vis-week-view").style.display  = v==="semana"?"block":"none";
+  renderVisitas();
+}
+
+function clearVisFilter(){
+  g("vis-from").value=""; g("vis-to").value=""; g("vis-search").value="";
+  renderVisitas();
+}
+
+function startOfWeek(d){
+  const dt=new Date(d);
+  const day=dt.getDay();
+  const diff=day===0?-6:1-day; // Monday
+  dt.setDate(dt.getDate()+diff);
+  dt.setHours(0,0,0,0);
+  return dt;
+}
+function endOfWeek(d){
+  const dt=startOfWeek(d);
+  dt.setDate(dt.getDate()+4); // Friday
+  dt.setHours(23,59,59,999);
+  return dt;
+}
+function semanaAnterior(){ visSemanaOffset--; renderVisitas(); }
+function semanaSiguiente(){ visSemanaOffset++; renderVisitas(); }
+
+function filterVisitas(){
+  const srch=(g("vis-search")?.value||"").toLowerCase();
+  const from=g("vis-from")?.value;
+  const to=g("vis-to")?.value;
+  return visitas.filter(v=>{
+    if(srch && !v.cliente?.toLowerCase().includes(srch) && !v.participantes?.toLowerCase().includes(srch) && !v.ubicacion?.toLowerCase().includes(srch) && !v.comentarios?.toLowerCase().includes(srch)) return false;
+    if(from && v.fecha < from) return false;
+    if(to   && v.fecha > to)   return false;
+    return true;
+  });
+}
+
+function renderVisitas(){
+  if(visView==="lista") renderVistaLista();
+  else renderVistaSemana();
+}
+
+function renderVistaLista(){
+  const f = filterVisitas();
+  const tb = g("vis-tbody");
+  if(!f.length){
+    tb.innerHTML=`<tr><td colspan="8" style="padding:48px;text-align:center;color:var(--t5)">${visitas.length===0?"Sin visitas registradas aún.":"Sin resultados para el filtro."}</td></tr>`;
+    return;
+  }
+  const canEdit = CU_ROLE==="admin"||CU_ROLE==="vendedor";
+  tb.innerHTML = f.map(v=>{
+    const vname = v.vendedor?.name||"";
+    return `<tr>
+      <td style="font-size:12px;color:var(--t3);white-space:nowrap;font-family:'DM Mono',monospace">${fd(v.fecha)}</td>
+      <td><p style="margin:0;font-weight:700;font-size:13px;color:var(--t1)">${v.cliente||"—"}</p>
+          ${vname?`<p style="margin:0;font-size:10px;color:var(--t4)">${vname}</p>`:""}</td>
+      <td style="font-size:12px;color:var(--t3)">${v.ubicacion||"—"}</td>
+      <td style="font-size:12px;color:var(--t2);max-width:160px"><p style="margin:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.participantes||"—"}</p></td>
+      <td style="max-width:240px"><p style="margin:0;font-size:12px;color:var(--t2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${(v.comentarios||"").replace(/"/g,"'")}">${v.comentarios||"—"}</p></td>
+      <td style="max-width:160px"><p style="margin:0;font-size:11px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.todo||"—"}</p></td>
+      <td style="font-size:12px;color:var(--t3);white-space:nowrap;font-family:'DM Mono',monospace">${fd(v.proxima_reunion)}</td>
+      <td style="white-space:nowrap">
+        ${canEdit?`<button onclick="openEditVisita('${v.id}')" style="background:none;border:none;color:var(--t4);cursor:pointer;font-size:13px;padding:4px 6px" title="Editar" onmouseover="this.style.color='var(--ac)'" onmouseout="this.style.color='var(--t4)'">✏️</button>
+        <button onclick="delVisita('${v.id}')" style="background:none;border:none;color:var(--t4);cursor:pointer;font-size:13px;padding:4px 6px" title="Eliminar" onmouseover="this.style.color='#ef4444'" onmouseout="this.style.color='var(--t4)'">✕</button>`:""}
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+function renderVistaSemana(){
+  const base = new Date();
+  base.setDate(base.getDate() + visSemanaOffset*7);
+  const lunes = startOfWeek(base);
+  const dias = ["Lun","Mar","Mié","Jue","Vie"];
+  const fechas = Array.from({length:5},(_,i)=>{
+    const d=new Date(lunes);d.setDate(d.getDate()+i);return d;
+  });
+
+  const lbl = `${fechas[0].toLocaleDateString("es-CO",{day:"2-digit",month:"short"})} — ${fechas[4].toLocaleDateString("es-CO",{day:"2-digit",month:"short",year:"numeric"})}`;
+  g("vis-week-label").textContent = lbl;
+
+  const canEdit = CU_ROLE==="admin"||CU_ROLE==="vendedor";
+  const srch=(g("vis-search")?.value||"").toLowerCase();
+
+  g("vis-calendar-grid").innerHTML = fechas.map((d,i)=>{
+    const iso = d.toISOString().split("T")[0];
+    const isHoy = iso===new Date().toISOString().split("T")[0];
+    const dayVis = visitas.filter(v=>{
+      if(v.fecha!==iso) return false;
+      if(srch && !v.cliente?.toLowerCase().includes(srch) && !v.participantes?.toLowerCase().includes(srch)) return false;
+      return true;
+    });
+    return `<div style="background:var(--card);border:1px solid ${isHoy?"var(--ac)":"var(--bor)"};border-radius:12px;overflow:hidden;min-height:180px">
+      <div style="padding:10px 12px;background:${isHoy?"var(--ac)":"var(--inp)"};border-bottom:1px solid var(--bor)">
+        <p style="margin:0;font-size:11px;font-weight:700;color:${isHoy?"white":"var(--t3)"};text-transform:uppercase;letter-spacing:.5px">${dias[i]}</p>
+        <p style="margin:0;font-size:18px;font-weight:700;color:${isHoy?"white":"var(--t1)"}">${d.getDate()}</p>
+      </div>
+      <div style="padding:8px">
+        ${dayVis.map(v=>`<div onclick="openEditVisita('${v.id}')" style="background:var(--pill);border-left:3px solid var(--ac);border-radius:6px;padding:7px 9px;margin-bottom:6px;cursor:pointer;transition:opacity .15s" onmouseover="this.style.opacity='.75'" onmouseout="this.style.opacity='1'">
+          <p style="margin:0;font-size:12px;font-weight:700;color:var(--t1);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.cliente}</p>
+          <p style="margin:0;font-size:10px;color:var(--t3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${v.participantes||v.ubicacion||""}</p>
+        </div>`).join("")}
+        ${canEdit?`<button onclick="openNewVisitaFecha('${iso}')" style="width:100%;background:none;border:1px dashed var(--bor);border-radius:6px;padding:5px;color:var(--t5);cursor:pointer;font-size:11px;margin-top:4px" onmouseover="this.style.borderColor='var(--ac)';this.style.color='var(--ac)'" onmouseout="this.style.borderColor='var(--bor)';this.style.color='var(--t5)'">+ Agregar</button>`:""}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function openNewVisita(){
+  g("vis-modal-title").textContent="Nueva visita";
+  g("vis-edit-id").value="";
+  g("vis-fecha").value=new Date().toISOString().split("T")[0];
+  g("vis-prox").value="";
+  g("vis-cliente").value=""; g("vis-ubicacion").value="";
+  g("vis-participantes").value=""; g("vis-comentarios").value=""; g("vis-todo").value="";
+  // Set current user as default vendedor
+  const sel=g("vis-vendedor");
+  if(sel){
+    sel.innerHTML=users.filter(u=>u.active).map(u=>`<option value="${u.id}"${u.id===CU.id?" selected":""}>${u.name}</option>`).join("");
+  }
+  g("m-visita").style.display="flex";
+}
+
+function openNewVisitaFecha(fecha){
+  openNewVisita();
+  g("vis-fecha").value=fecha;
+}
+
+async function openEditVisita(id){
+  const v=visitas.find(x=>x.id===id);if(!v)return;
+  const canEdit=CU_ROLE==="admin"||CU_ROLE==="vendedor";
+  g("vis-modal-title").textContent=canEdit?"Editar visita":"Ver visita";
+  g("vis-edit-id").value=id;
+  g("vis-fecha").value=v.fecha||"";
+  g("vis-prox").value=v.proxima_reunion||"";
+  g("vis-cliente").value=v.cliente||"";
+  g("vis-ubicacion").value=v.ubicacion||"";
+  g("vis-participantes").value=v.participantes||"";
+  g("vis-comentarios").value=v.comentarios||"";
+  g("vis-todo").value=v.todo||"";
+  const sel=g("vis-vendedor");
+  if(sel){
+    sel.innerHTML=users.filter(u=>u.active).map(u=>`<option value="${u.id}"${u.id===v.vendedor_id?" selected":""}>${u.name}</option>`).join("");
+  }
+  // Read-only for lectores
+  ["vis-fecha","vis-prox","vis-cliente","vis-ubicacion","vis-participantes","vis-comentarios","vis-todo","vis-vendedor"].forEach(id=>{
+    const el=g(id);if(el){el.disabled=!canEdit;}
+  });
+  g("btn-save-vis").style.display=canEdit?"block":"none";
+  g("m-visita").style.display="flex";
+}
+
+async function saveVisita(){
+  const fecha=g("vis-fecha").value;
+  const cliente=g("vis-cliente").value.trim();
+  const comentarios=g("vis-comentarios").value.trim();
+  if(!fecha||!cliente||!comentarios){alert("Fecha, cliente y comentarios son requeridos.");return;}
+  const btn=g("btn-save-vis");btn.textContent="Guardando...";btn.disabled=true;
+  const editId=g("vis-edit-id").value;
+  const payload={
+    fecha,
+    cliente,
+    ubicacion:g("vis-ubicacion").value||null,
+    participantes:g("vis-participantes").value||null,
+    comentarios,
+    todo:g("vis-todo").value||null,
+    proxima_reunion:g("vis-prox").value||null,
+    vendedor_id:g("vis-vendedor").value||CU.id,
+    updated_at:new Date().toISOString()
+  };
+  let error;
+  if(editId){
+    ({error}=await db.from("visits").update(payload).eq("id",editId));
+  }else{
+    payload.created_by=CU.id;
+    ({error}=await db.from("visits").insert(payload));
+  }
+  btn.textContent="Guardar visita";btn.disabled=false;
+  if(error){alert("Error al guardar: "+error.message);return;}
+  g("m-visita").style.display="none";
+  await loadVisitas();
+  renderVisitas();
+}
+
+async function delVisita(id){
+  if(!confirm("¿Eliminar esta visita?"))return;
+  const{error}=await db.from("visits").delete().eq("id",id);
+  if(error){alert("Error: "+error.message);return;}
+  visitas=visitas.filter(v=>v.id!==id);
+  renderVisitas();
+  g("vis-subtitle").textContent=`${visitas.length} visitas registradas`;
+}
+
+// ── EXPORT EXCEL ──────────────────────────────────────────
+async function exportVisitas(){
+  const f=filterVisitas();
+  if(!f.length){alert("No hay visitas para exportar con el filtro actual.");return;}
+
+  // Build CSV-like data for SheetJS
+  const rows=[["Fecha","Cliente","Ubicación","Participantes","Comentarios","To Do","Próxima Reunión","Vendedor"]];
+  f.forEach(v=>{
+    rows.push([
+      v.fecha||"",
+      v.cliente||"",
+      v.ubicacion||"",
+      v.participantes||"",
+      v.comentarios||"",
+      v.todo||"",
+      v.proxima_reunion||"",
+      v.vendedor?.name||""
+    ]);
+  });
+
+  // Use SheetJS (already available as XLSX in the app's imports)
+  try{
+    const XLSX = window.XLSX || await import("https://cdn.sheetjs.com/xlsx-0.20.2/package/xlsx.mjs");
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+
+    // Column widths
+    ws["!cols"]=[{wch:12},{wch:30},{wch:15},{wch:35},{wch:60},{wch:40},{wch:12},{wch:20}];
+
+    // Style header row (SheetJS community doesn't support styles, but we set it up)
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb,ws,"Visitas");
+
+    const from=g("vis-from")?.value||"";
+    const to=g("vis-to")?.value||"";
+    const fname=`Visitas_Comerciales${from?"_"+from:""}${to?"_al_"+to:""}.xlsx`;
+    XLSX.writeFile(wb,fname);
+  }catch(e){
+    // Fallback: download as CSV
+    const csv=rows.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+    const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;
+    a.download=`Visitas_Comerciales.csv`;a.click();
+    URL.revokeObjectURL(url);
+  }
+}
+// ══════════════════════════════════════════════════════════
 </script>
 
 <!-- MODAL REPORTAR SEGUIMIENTO -->
@@ -1990,6 +2293,37 @@ function switchModule(m){
     <label class="lbl">Email Teams *</label>
     <input type="email" id="met-email" placeholder="usuario@weiszinstrumentos.onmicrosoft.com" style="margin-bottom:20px"/>
     <button class="btn btn-p" id="btn-met" onclick="saveTeamsEmail()" style="width:100%;padding:12px;font-size:14px">Guardar</button>
+  </div>
+</div>
+
+<!-- MODAL NUEVA/EDITAR VISITA -->
+<div id="m-visita" class="modal-bg" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal" style="max-width:560px;padding:26px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <h2 id="vis-modal-title" style="font-size:17px;font-weight:700;color:var(--t1)">Nueva visita</h2>
+      <button onclick="document.getElementById('m-visita').style.display='none'" style="background:none;border:none;color:var(--t3);cursor:pointer;font-size:20px">&#x2715;</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div><label class="lbl">Fecha *</label><input type="date" id="vis-fecha"/></div>
+      <div><label class="lbl">Próxima reunión</label><input type="date" id="vis-prox"/></div>
+    </div>
+    <label class="lbl">Cliente *</label>
+    <div style="position:relative;margin-bottom:14px">
+      <input type="text" id="vis-cliente" placeholder="Nombre del cliente" autocomplete="off" oninput="filterClients('vis-cliente','vis-cliente-list')"/>
+      <div id="vis-cliente-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--card);border:1px solid var(--bor);border-radius:8px;max-height:180px;overflow-y:auto;z-index:300;box-shadow:0 4px 20px rgba(0,0,0,.15)"></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+      <div><label class="lbl">Ubicación</label><input type="text" id="vis-ubicacion" placeholder="Ciudad o lugar"/></div>
+      <div><label class="lbl">Vendedor</label><select id="vis-vendedor"></select></div>
+    </div>
+    <label class="lbl">Participantes</label>
+    <input type="text" id="vis-participantes" placeholder="Nombres de las personas en la reunión" style="margin-bottom:14px"/>
+    <label class="lbl">Comentarios *</label>
+    <textarea id="vis-comentarios" placeholder="¿Qué se conversó? ¿Cuáles fueron los acuerdos?" style="min-height:100px;margin-bottom:14px"></textarea>
+    <label class="lbl">To Do / Pendientes</label>
+    <textarea id="vis-todo" placeholder="Acciones pendientes después de la visita" style="min-height:60px;margin-bottom:20px"></textarea>
+    <input type="hidden" id="vis-edit-id"/>
+    <button class="btn btn-p" id="btn-save-vis" onclick="saveVisita()" style="width:100%;padding:12px;font-size:14px">Guardar visita</button>
   </div>
 </div>
 </body>
