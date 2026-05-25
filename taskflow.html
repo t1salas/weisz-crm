@@ -1973,6 +1973,7 @@ document.addEventListener("click", e=>{
 // Parsear menciones del texto y notificar por Teams
 async function notificarMenciones(txt, contexto, titulo, subtitulo){
   try{
+    if(!users||!users.length){ const{data:ud}=await db.from("users").select("*").eq("active",true); if(ud){ud.forEach(u=>{if(!users.find(x=>x.id===u.id))users.push(u);});} console.log("Users en menciones:", users.map(u=>u.name)); }
     const mentions = [...new Set(txt.split(' ').filter(w=>w.startsWith('@')&&w.length>1).map(w=>w.slice(1).split("").filter(c=>!".,!?;:".includes(c)).join("")))];
     console.log("mentions detectadas:", mentions); if(!mentions.length){ console.log("Sin menciones encontradas"); return; }
     const autor = users.find(u=>u.id===CU.id)?.name || CU.email;
