@@ -1969,19 +1969,19 @@ document.addEventListener("click", e=>{
 // Parsear menciones del texto y notificar por Teams
 async function notificarMenciones(txt, contexto, titulo, subtitulo){
   try{
-    const mentions = [...new Set((txt.match(/@([^@\n,!?.]+?)(?=\s@|\s*$|[,!?.])/g)||[]).map(m=>m.slice(1).trim()))];
+    const mentions = [...new Set(txt.split(' ').filter(w=>w.startsWith('@')&&w.length>1).map(w=>w.slice(1).replace(/[.,!?;:]/g,'')))];
     if(!mentions.length) return;
     const autor = users.find(u=>u.id===CU.id)?.name || CU.email;
     for(const nombre of mentions){
       const dest = users.find(u=>u.name.toLowerCase()===nombre.toLowerCase() && u.id!==CU.id);
       if(!dest?.email) continue;
-      const msg = `<b>🔔 Te mencionaron en un comentario</b><br>`+
-        `<b>${contexto==="tarea"?"📋 Tarea":"📊 Oportunidad"}:</b> ${titulo||""}${subtitulo?" — "+subtitulo:""}<br>`+
-        `<b>Mencionado por:</b> ${autor}<br><br>`+
-        `<b>Comentario:</b><br>${txt.replace(/
-/g,"<br>")}<br><br>`+
-        `<i>Ingresa al CRM para responder.</i>`;
-      const ok = await sendTeamsMessage(dest.email, msg);
+      const txtHtml = txt.split("\n").join("<br>");
+      const msg = "<b>\uD83D\uDD14 Te mencionaron en un comentario</b><br>"+
+        "<b>"+(contexto==="tarea"?"\uD83D\uDCCB Tarea":"\uD83D\uDCCA Oportunidad")+":</b> "+(titulo||"")+(subtitulo?" \u2014 "+subtitulo:"")+"<br>"+
+        "<b>Mencionado por:</b> "+autor+"<br><br>"+
+        "<b>Comentario:</b><br>"+txtHtml+"<br><br>"+
+        "<i>Ingresa al CRM para responder.</i>";
+            const ok = await sendTeamsMessage(dest.email, msg);
       console.log(ok ? `✅ Mención notificada a ${dest.email}` : `⚠️ No se pudo notificar a ${dest.email}`);
     }
   }catch(e){
