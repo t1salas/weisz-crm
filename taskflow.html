@@ -1922,10 +1922,15 @@ async function initVisitas(){
 }
 
 async function loadVisitas(){
-  const{data} = await db.from("visits")
-    .select("*,vendedor:users!visits_vendedor_id_fkey(id,name)")
+  const{data,error} = await db.from("visits")
+    .select("*")
     .order("fecha",{ascending:false});
-  visitas = data||[];
+  if(error){ console.error("loadVisitas error:",error.message); visitas=[]; return; }
+  // Resolve vendedor name from already-loaded users array
+  visitas = (data||[]).map(v=>{
+    const u = users.find(x=>x.id===v.vendedor_id);
+    return {...v, vendedor: u ? {id:u.id, name:u.name} : null};
+  });
   g("vis-subtitle").textContent = `${visitas.length} visitas registradas`;
 }
 
