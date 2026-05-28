@@ -1,0 +1,11 @@
+# Credenciales — NUNCA subir a GitHub
+config.js
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# Editores
+.vscode/
+*.swp
+*.swo
